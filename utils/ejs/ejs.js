@@ -644,7 +644,8 @@ Template.prototype = {
     }
 
     if (opts.client) {
-      src = 'escapeFn = escapeFn || ' + escapeFn.toString() + ';' + '\n' + src;
+      //   src = 'escapeFn = escapeFn || ' + escapeFn.toString() + ';' + '\n' + src;
+      src = 'escapeFn = escapeFn;' + '\n' + src;
       if (opts.compileDebug) {
         src = 'rethrow = rethrow || ' + rethrow.toString() + ';' + '\n' + src;
       }
