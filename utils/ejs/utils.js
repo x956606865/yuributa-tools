@@ -97,7 +97,7 @@ var escapeFuncStr =
  */
 
 exports.escapeXML = function (markup) {
-  return markup == undefined ? '' : String(markup).replace(_MATCH_HTML, encode_char);
+  return markup == undefined ? '' : String(markup).replace(/[&<>'"]/g, encode_char);
 };
 
 function escapeXMLToString() {
