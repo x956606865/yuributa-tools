@@ -58,7 +58,7 @@ var _ENCODE_HTML_RULES = {
 };
 var _MATCH_HTML = /[&<>'"]/g;
 
-function encode_char(c) {
+export function encode_char(c) {
   return _ENCODE_HTML_RULES[c] || c;
 }
 
