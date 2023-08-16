@@ -1,4 +1,4 @@
-const TerserPlugin = require('terser-webpack-plugin');
+// const TerserPlugin = require('terser-webpack-plugin');
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
@@ -20,15 +20,7 @@ module.exports = withBundleAnalyzer({
       test: /\.xml$/,
       use: ['raw-loader'],
     });
-    config.optimization = {
-      minimize: true,
-      minimizer: [
-        new TerserPlugin({
-          // 排除混淆node_modules文件夹中的文件
-          exclude: /node_modules/,
-        }),
-      ],
-    };
+
     return config;
   },
 });
