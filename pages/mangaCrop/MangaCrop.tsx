@@ -2,7 +2,6 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable @typescript-eslint/no-shadow */
 import JSZip from 'jszip';
-import { ArchiveReader, libarchiveWasm } from 'libarchive-wasm';
 
 import {
   Accordion,
@@ -25,7 +24,7 @@ import {
   Radio,
   LoadingOverlay,
 } from '@mantine/core';
-import { Dropzone, MIME_TYPES } from '@mantine/dropzone';
+import { Dropzone } from '@mantine/dropzone';
 import { useForm } from '@mantine/form';
 import { useListState } from '@mantine/hooks';
 import { IconPhoto, IconUpload, IconX } from '@tabler/icons';
@@ -40,14 +39,13 @@ function loadImage(file: any) {
     img.onerror = reject;
   });
 }
-const base64ToImageUrl = (base64Data) => {
-  return fetch(base64Data)
+const base64ToImageUrl = (base64Data: any) =>
+  fetch(base64Data)
     .then((response) => response.blob())
     .then((blob) => URL.createObjectURL(blob))
     .catch((error) => {
       console.error('Failed to convert Base64 to Image URL:', error);
     });
-};
 async function checkPadding(img: any, { loggerHandler, form }: any) {
   loggerHandler.append('开始检测padding...');
 
@@ -272,7 +270,7 @@ async function checkPadding(img: any, { loggerHandler, form }: any) {
     middleWidth: minPaddingWidth,
   };
 }
-function readFile(file) {
+function readFile(file: any) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -290,7 +288,7 @@ function readFile(file) {
     reader.readAsArrayBuffer(file);
   });
 }
-function calcSample(array) {
+function calcSample(array: any) {
   const sortedArray = array.slice().sort((a: any, b: any) => a - b);
   const trimmedArray = sortedArray.slice(1, sortedArray.length - 1);
   const sum = trimmedArray.reduce((acc: any, val: any) => acc + val, 0);
@@ -592,7 +590,7 @@ export default function HomePage() {
 
       try {
         // 使用 File API 读取文件内容
-        const fileData = await readFile(target);
+        const fileData: any = await readFile(target);
 
         // 通过 JSZip API 解压文件
         const unzipped = await zip.loadAsync(fileData);
@@ -616,7 +614,7 @@ export default function HomePage() {
 
     // console.log('%c [ fileList ]-24', 'font-size:13px; background:pink; color:#bf2c9f;', fileList);
     const unProcessedList = fileList.filter(
-      (item) => !resultImgs.find((ri) => ri.name === item.name)
+      (item) => !resultImgs.find((ri: { name: any }) => ri.name === item.name)
     );
     const processedList = await processImages2(
       unProcessedList,
@@ -673,7 +671,7 @@ export default function HomePage() {
     <>
       <Box pos="relative">
         <Center>
-          <Container w={'80%'}>
+          <Container w="80%">
             <LoadingOverlay visible={globalLoading} style={{ height: '100%' }} />
             <Title ta="center" order={1}>
               漫画拆分
@@ -873,7 +871,7 @@ export default function HomePage() {
                           <AspectRatio key={item.key} ratio={preset.width / preset.height} w={200}>
                             <MImage
                               width={200}
-                              height={'100%'}
+                              height="100%"
                               src={item.imageUrl}
                               imageProps={{ onLoad: () => URL.revokeObjectURL(item.imageUrl) }}
                             />

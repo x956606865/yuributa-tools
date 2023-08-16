@@ -1,14 +1,4 @@
-import { useTheme } from '@emotion/react';
-import {
-  AppShell,
-  Group,
-  Header,
-  Navbar,
-  Text,
-  ThemeIcon,
-  UnstyledButton,
-  useMantineTheme,
-} from '@mantine/core';
+import { AppShell, Group, Navbar, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
 import { IconCrop } from '@tabler/icons-react';
 import { useRouter } from 'next/router';
 import type { ReactNode } from 'react';
@@ -17,6 +7,7 @@ interface MainLinkProps {
   icon: React.ReactNode;
   color: string;
   label: string;
+  href: string;
 }
 function MainLink({ icon, color, label, href }: MainLinkProps) {
   const router = useRouter();
@@ -59,7 +50,6 @@ const data = [
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {
-  const theme = useMantineTheme();
   const links = data.map((link) => <MainLink {...link} key={link.label} />);
 
   //   console.log('%c [ theme ]-7', 'font-size:13px; background:pink; color:#bf2c9f;', theme);
@@ -67,7 +57,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     <AppShell
       padding="md"
       navbar={
-        <Navbar hiddenBreakpoint={10000} width={{ base: 300 }} height={'100%'} p="xs">
+        <Navbar hiddenBreakpoint={10000} width={{ base: 300 }} height="100%" p="xs">
           <Navbar.Section grow mt="md">
             {links}
           </Navbar.Section>
