@@ -41,6 +41,7 @@ var hasOwn = function (obj, key) {
  * @private
  */
 exports.escapeRegExpChars = function (string) {
+  var regExpChars = /[|\\{}()[\]^$+*?.]/g;
   // istanbul ignore if
   if (!string) {
     return '';
