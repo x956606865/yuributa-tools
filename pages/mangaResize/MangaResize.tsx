@@ -1,7 +1,8 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable no-plusplus */
 /* eslint-disable @typescript-eslint/no-shadow */
-
 import {
   Accordion,
   Center,
@@ -22,6 +23,7 @@ import {
   Slider,
   Radio,
   LoadingOverlay,
+  Progress,
   TextInput,
 } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
@@ -58,7 +60,6 @@ async function checkPadding(img: any, { loggerHandler, form }: any) {
   const tempRed = pixels[0];
   const tempGreen = pixels[1];
   const tempBlue = pixels[2];
-  let middleFlag = 'white';
   let flag = 'white';
   if (form.values.autoDetectPaddingColor) {
     if (tempRed >= whiteThreshold && tempBlue >= whiteThreshold && tempGreen >= whiteThreshold) {
@@ -66,24 +67,9 @@ async function checkPadding(img: any, { loggerHandler, form }: any) {
     } else {
       flag = 'black';
     }
-    const middleX = Math.floor(canvas.width / 2);
-    const middleIndex = middleX * 4;
-    const middleRed = pixels[middleIndex];
-    const middleGreen = pixels[middleIndex + 1];
-    const middleBlue = pixels[middleIndex + 2];
-    if (
-      middleRed >= whiteThreshold &&
-      middleGreen >= whiteThreshold &&
-      middleBlue >= whiteThreshold
-    ) {
-      middleFlag = 'white';
-    } else {
-      middleFlag = 'black';
-    }
+
     loggerHandler.append(`检测两侧padding颜色为：${flag}`);
-    loggerHandler.append(`检测中间padding颜色为：${middleFlag}`);
   } else {
-    middleFlag = form.values.middlePaddingColor;
     flag = form.values.paddingColor;
   }
 
@@ -159,107 +145,10 @@ async function checkPadding(img: any, { loggerHandler, form }: any) {
       rightMaxBlankWidth = rightBlankWidth;
     }
   }
-  // console.log(leftMaxBlankWidth, rightMaxBlankWidth);
-  let minPaddingWidth = Infinity;
-
-  // 遍历图像像素数据，检测留白的宽度
-  for (let x = Math.floor(canvas.width / 2); x >= 0; x--) {
-    let isEmptyColumn = true;
-    for (let y = 0; y < canvas.height; y++) {
-      const index = (y * canvas.width + x) * 4;
-      const red = pixels[index];
-      const green = pixels[index + 1];
-      const blue = pixels[index + 2];
-      const alpha = pixels[index + 3];
-      if (middleFlag === 'white') {
-        // 判断是否是接近白色的像素
-        if (
-          red < whiteThreshold ||
-          green < whiteThreshold ||
-          blue < whiteThreshold ||
-          alpha < whiteThreshold
-        ) {
-          isEmptyColumn = false;
-          break;
-        }
-      } else if (
-        red > blackThreshold ||
-        green > blackThreshold ||
-        blue > blackThreshold ||
-        alpha > blackThreshold
-      ) {
-        isEmptyColumn = false;
-        break;
-      }
-    }
-
-    // 找到第一个非空列
-    if (!isEmptyColumn) {
-      const leftX = x;
-      for (let i = Math.floor(canvas.width / 2); i < canvas.width; i++) {
-        let isEmptyColumn: any = true;
-        for (let y = 0; y < canvas.height; y++) {
-          const index = (y * canvas.width + i) * 4;
-          const red = pixels[index];
-          const green = pixels[index + 1];
-          const blue = pixels[index + 2];
-          const alpha = pixels[index + 3];
-
-          if (middleFlag === 'white') {
-            // 判断是否是接近白色的像素
-            if (
-              red < whiteThreshold ||
-              green < whiteThreshold ||
-              blue < whiteThreshold ||
-              alpha < whiteThreshold
-            ) {
-              isEmptyColumn = false;
-              break;
-            }
-          } else if (
-            red > blackThreshold ||
-            green > blackThreshold ||
-            blue > blackThreshold ||
-            alpha > blackThreshold
-          ) {
-            isEmptyColumn = false;
-            break;
-          }
-        }
-
-        // 找到第一个非空列
-        if (!isEmptyColumn) {
-          const rightX = i;
-          console.log(
-            '%c [ rightX ]-634',
-            'font-size:13px; background:pink; color:#bf2c9f;',
-            rightX
-          );
-          console.log('%c [ leftX ]-636', 'font-size:13px; background:pink; color:#bf2c9f;', leftX);
-
-          const paddingWidth = rightX - leftX;
-          if (paddingWidth < minPaddingWidth) {
-            minPaddingWidth = paddingWidth;
-          }
-          break;
-        }
-      }
-      break;
-    }
-  }
-  // console.log(
-  //   '%c [ minPaddingWidth ]-625',
-  //   'font-size:13px; background:pink; color:#bf2c9f;',
-  //   minPaddingWidth
-  // );
-  //   loggerHandler.append(
-  //     `检测结果为：左侧padding：${leftMaxBlankWidth}，右侧padding：${rightMaxBlankWidth}，颜色：${flag}。中间padding：${minPaddingWidth}，颜色：${middleFlag}`
-  //   );
 
   return {
     leftPadding: leftMaxBlankWidth,
     rightPadding: rightMaxBlankWidth,
-    middleWidth: minPaddingWidth,
   };
 }
 
@@ -279,28 +168,24 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
     const r: any = {
       leftPadding: [],
       rightPadding: [],
-      middleWidth: [],
     };
     // eslint-disable-next-line no-restricted-syntax
     for (const i of sampleIndex) {
       const img = imgList[i];
       // eslint-disable-next-line no-await-in-loop
-      const { leftPadding, rightPadding, middleWidth } = await checkPadding(img, {
+      const { leftPadding, rightPadding } = await checkPadding(img, {
         loggerHandler,
         form,
       });
       r.leftPadding.push(leftPadding);
       r.rightPadding.push(rightPadding);
-      r.middleWidth.push(middleWidth);
     }
     if (sampleIndex.length > 3) {
       paddingResult.leftPadding = calcSample(r.leftPadding);
       paddingResult.rightPadding = calcSample(r.rightPadding);
-      paddingResult.middleWidth = calcSample(r.middleWidth);
     } else {
       paddingResult.leftPadding = r.leftPadding[0];
       paddingResult.rightPadding = r.rightPadding[0];
-      paddingResult.middleWidth = r.middleWidth[0];
     }
   }
   const promises = imgList.map(async (img: any, index: any) => {
@@ -308,16 +193,15 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
     loggerHandler.append(`process images ${index}/${imgList.length}`);
     let leftPadding;
     let rightPadding;
-    let middleWidth;
     if (form.values.paddingCheckMethod === 'sample') {
-      ({ leftPadding, rightPadding, middleWidth } = paddingResult);
+      ({ leftPadding, rightPadding } = paddingResult);
     } else {
-      ({ leftPadding, rightPadding, middleWidth } = await checkPadding(img, {
+      ({ leftPadding, rightPadding } = await checkPadding(img, {
         form,
         loggerHandler,
       }));
     }
-    loggerHandler.append(`使用的padding为：${leftPadding},${rightPadding},${middleWidth}`);
+    loggerHandler.append(`使用的padding为：${leftPadding},${rightPadding}`);
 
     if (img.name.includes('cover')) {
       const paddings = await checkPadding(img, {
@@ -325,7 +209,7 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
         loggerHandler,
       });
       loggerHandler.append(
-        `Cover 使用的padding为：${paddings.leftPadding},${paddings.rightPadding},${paddings.middleWidth}`
+        `Cover 使用的padding为：${paddings.leftPadding},${paddings.rightPadding}`
       );
 
       const imgObj: any = await loadImage(img);
@@ -359,25 +243,17 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
 
     // Split the image into two halves
     const leftCanvas = document.createElement('canvas');
-    const rightCanvas = document.createElement('canvas');
 
     const leftCtx: any = leftCanvas.getContext('2d');
-    const rightCtx: any = rightCanvas.getContext('2d');
-    const imgWidth = (imgObj.width - leftPadding - rightPadding - middleWidth) / 2;
+    const imgWidth = imgObj.width - leftPadding - rightPadding;
     leftCanvas.width = targetImgSize.width;
     leftCanvas.height = targetImgSize.height;
-    rightCanvas.width = targetImgSize.width;
-    rightCanvas.height = targetImgSize.height;
     // 设置默认背景色
     leftCtx.fillStyle = '#fff';
 
     // 填充整个 Canvas
     leftCtx.fillRect(0, 0, leftCanvas.width, leftCanvas.height);
-    // 设置默认背景色
-    rightCtx.fillStyle = '#fff';
 
-    // 填充整个 Canvas
-    rightCtx.fillRect(0, 0, rightCanvas.width, rightCanvas.height);
     if (imgWidth > targetImgSize.width || imgObj.height > targetImgSize.height) {
       console.log('bigger');
       const canvas = document.createElement('canvas');
@@ -403,33 +279,11 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
         scaledWidth,
         scaledHeight
       );
-      ctx.drawImage(
-        imgObj,
-        leftPadding + imgWidth + middleWidth,
-        0,
-        imgWidth,
-        imgObj.height,
-        scaledWidth,
-        0,
-        scaledWidth,
-        scaledHeight
-      );
+
       const newPadding = (targetImgSize.width - scaledWidth) / 2;
       leftCtx.drawImage(
         canvas,
         0,
-        0,
-        scaledWidth,
-        scaledHeight,
-        newPadding,
-        0,
-        scaledWidth,
-        scaledHeight
-      );
-
-      rightCtx.drawImage(
-        canvas,
-        scaledWidth,
         0,
         scaledWidth,
         scaledHeight,
@@ -461,24 +315,11 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
         scaledWidth,
         scaledHeight
       );
-
-      rightCtx.drawImage(
-        imgObj,
-        imgObj.width - rightPadding - imgWidth,
-        0,
-        imgWidth,
-        imgObj.height,
-        newPadding,
-        (targetImgSize.height - scaledHeight) / 2,
-        scaledWidth,
-        scaledHeight
-      );
     }
 
     // Convert both canvases to base64 format and return them as an object
     return {
-      left: leftCanvas.toDataURL('image/jpeg', 0.8),
-      right: rightCanvas.toDataURL('image/jpeg', 0.8),
+      file: leftCanvas.toDataURL('image/jpeg', 0.8),
       name: img.name,
     };
   });
@@ -496,7 +337,7 @@ const SizePreset: any = {
   },
 };
 
-export default function HomePage() {
+export default function MangaResize() {
   const theme = useMantineTheme();
   const [fileList, fileListHandler] = useListState<any>([]);
   const [logger, loggerHandler] = useListState<any>([]);
@@ -510,10 +351,8 @@ export default function HomePage() {
     initialValues: {
       imgType: 'image/jpeg',
       targetDevice: 'leaf2',
-      readFrom: 'rtl',
       autoDetectPaddingColor: true,
       paddingColor: 'white',
-      middlePaddingColor: 'white',
       whiteThreshold: 240,
       blackThreshold: 60,
       paddingCheckMethod: 'sample',
@@ -525,7 +364,6 @@ export default function HomePage() {
   });
   const doProcess = async () => {
     setGlobalLoading(true);
-
     // console.log('%c [ fileList ]-24', 'font-size:13px; background:pink; color:#bf2c9f;', fileList);
     const unProcessedList = fileList.filter(
       (item) => !resultImgs.find((ri: { name: any }) => ri.name === item.name)
@@ -539,22 +377,15 @@ export default function HomePage() {
       }
     );
     const newList: any = [];
-    const { readFrom } = form.values;
     processedList.forEach((item) => {
       if (item.cover) {
         setCoverImg(item.cover);
         return;
       }
-      if (item.left) {
+      if (item.file) {
         newList.push({
-          file: item.left,
-          name: `${item.name.replace(/\.\w+$/, '')}_${readFrom === 'rtl' ? '01' : '00'}.jpg`,
-        });
-      }
-      if (item.right) {
-        newList.push({
-          file: item.right,
-          name: `${item.name.replace(/\.\w+$/, '')}_${readFrom === 'rtl' ? '00' : '01'}.jpg`,
+          file: item.file,
+          name: item.name,
         });
       }
     });
@@ -578,9 +409,7 @@ export default function HomePage() {
     loggerHandler.setState([]);
     setPreviewList([]);
   }, [form.values]);
-  console.log({
-    [form.values.imgType]: form.values.imgType === 'application/rar' ? ['.rar'] : [],
-  });
+
   return (
     <>
       <Box pos="relative">
@@ -588,7 +417,7 @@ export default function HomePage() {
           <Container w="80%">
             <LoadingOverlay visible={globalLoading} style={{ height: '100%' }} />
             <Title ta="center" order={1}>
-              漫画拆分
+              漫画Resize
             </Title>
             <Select
               mt={10}
@@ -601,22 +430,12 @@ export default function HomePage() {
                 { label: 'JPEG', value: 'image/jpeg' },
                 { label: 'PNG', value: 'image/png' },
                 { label: 'GIF', value: 'image/gif' },
+                { label: 'ZIP', value: 'application/zip' },
+                { label: 'RAR', value: 'application/vnd.rar' },
               ]}
               {...form.getInputProps('imgType')}
             />
-            <Select
-              mt={10}
-              name="readFrom"
-              label="选择漫画翻页类型"
-              placeholder="Pick one"
-              searchable
-              nothingFound="No options"
-              data={[
-                { label: '从右往左', value: 'rtl' },
-                { label: '从左往右', value: 'ltr' },
-              ]}
-              {...form.getInputProps('readFrom')}
-            />
+
             <Select
               mt={10}
               name="targetDevice"
@@ -675,6 +494,14 @@ export default function HomePage() {
                 </div>
               </Group>
             </Dropzone>
+
+            <Progress
+              mt={20}
+              size={24}
+              value={resultImgs.length}
+              label={`处理进度:${resultImgs.length}/${fileList.length}`}
+              radius="xl"
+            />
             <Accordion defaultValue="" mt={20}>
               <Accordion.Item value="bookInfo">
                 <Accordion.Control>输出设置</Accordion.Control>
@@ -725,19 +552,6 @@ export default function HomePage() {
                           { label: '黑色', value: 'black' },
                         ]}
                         {...form.getInputProps('paddingColor')}
-                      />
-                      <Select
-                        mt={10}
-                        name="middlePaddingColor"
-                        label="中间padding颜色"
-                        placeholder="Pick one"
-                        searchable
-                        nothingFound="No options"
-                        data={[
-                          { label: '白色', value: 'white' },
-                          { label: '黑色', value: 'black' },
-                        ]}
-                        {...form.getInputProps('middlePaddingColor')}
                       />
                     </Box>
                   )}
@@ -861,67 +675,6 @@ export default function HomePage() {
           </Container>
         </Center>
       </Box>
-      {/* <div class="max-w-lg mx-auto">
-        <h1 class="text-2xl font-bold mb-5">Image Cropper</h1>
-        <div class="mb-5">
-          <label for="image-type" class="block font-medium mb-2">
-            选择图片类型:
-          </label>
-          <select
-            id="image-type"
-            name="image-type"
-            class="w-full bg-gray-100 text-gray-800 py-2 px-4 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="image/jpeg">JPEG</option>
-            <option value="image/png">PNG</option>
-            <option value="image/gif">GIF</option>
-          </select>
-        </div>
-        <div class="mb-5">
-          <label for="targetDevice" class="block font-medium mb-2">
-            目标机型:
-          </label>
-          <select
-            id="targetDevice"
-            name="targetDevice"
-            class="w-full bg-gray-100 text-gray-800 py-2 px-4 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="leaf2">BOOX Leaf2</option>
-          </select>
-        </div>
-
-        <div class="mb-5">
-          <label for="images" class="block mb-2">
-            Select Images
-          </label>
-          <input
-            type="file"
-            name="images"
-            id="images"
-            class="block w-full border p-2 rounded-md"
-            accept="image/*"
-            multiple
-          />
-        </div>
-        <button id="previewBtn" class="bg-blue-500 text-white py-2 px-4 rounded-md">
-          预览
-        </button>
-        <button id="clearPreview" class="bg-blue-500 text-white py-2 px-4 rounded-md">
-          清空预览
-        </button>
-        <button
-          id="processBtn"
-          class="bg-blue-500 text-white py-2 px-4 rounded-md disabled:opacity-50"
-        >
-          裁剪
-          <span id="loading-btn-text" class="hidden">
-            {' '}
-            Loading...
-          </span>
-        </button>
-
-        <div class="mt-5 flex flex-wrap" id="previewBox"></div>
-      </div> */}
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { AppShell, Group, Navbar, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
-import { IconCrop } from '@tabler/icons-react';
+import { IconCrop, IconAspectRatio } from '@tabler/icons-react';
+
 import { useRouter } from 'next/router';
 import type { ReactNode } from 'react';
 
@@ -46,6 +47,12 @@ const data = [
     color: 'blue',
     label: '漫画拆分',
     href: '/mangaCrop/MangaCrop',
+  },
+  {
+    icon: <IconAspectRatio size="1rem" />,
+    color: 'blue',
+    label: '漫画Resize',
+    href: '/mangaResize/MangaResize',
   },
 ];
 
