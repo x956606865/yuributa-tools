@@ -16,7 +16,7 @@ import bookConfig from './tpl/book.opf.ejs';
 import toc from './tpl/toc.ncx.ejs';
 import JSZip from 'jszip';
 // import * as ejs from './ejs.min';
-import * as ejs from '../ejs/ejs';
+import * as ejs from 'ejs';
 
 function encode_char(c) {
   return _ENCODE_HTML_RULES[c] || c;
