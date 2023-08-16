@@ -1,7 +1,74 @@
 diff --git a/node_modules/ejs/lib/ejs.js b/node_modules/ejs/lib/ejs.js
-index 65590ea..adbe3ce 100755
+index 65590ea..053f25f 100755
 --- a/node_modules/ejs/lib/ejs.js
 +++ b/node_modules/ejs/lib/ejs.js
+@@ -45,8 +45,8 @@
+  */
+ 
+ 
+-var fs = require('fs');
+-var path = require('path');
++// var fs = require('fs');
++// var path = require('path');
+ var utils = require('./utils');
+ 
+ var scopeOptionWarned = false;
+@@ -84,7 +84,7 @@ exports.cache = utils.cache;
+  * @type {fileLoader}
+  */
+ 
+-exports.fileLoader = fs.readFileSync;
++// exports.fileLoader = fs.readFileSync;
+ 
+ /**
+  * Name of the object containing the locals.
+@@ -118,15 +118,15 @@ exports.promiseImpl = (new Function('return this;'))().Promise;
+  * @return {String}
+  */
+ exports.resolveInclude = function(name, filename, isDir) {
+-  var dirname = path.dirname;
+-  var extname = path.extname;
+-  var resolve = path.resolve;
+-  var includePath = resolve(isDir ? filename : dirname(filename), name);
+-  var ext = extname(name);
+-  if (!ext) {
+-    includePath += '.ejs';
+-  }
+-  return includePath;
++  // var dirname = path.dirname;
++  // var extname = path.extname;
++  // var resolve = path.resolve;
++  // var includePath = resolve(isDir ? filename : dirname(filename), name);
++  // var ext = extname(name);
++  // if (!ext) {
++  //   includePath += '.ejs';
++  // }
++  // return includePath;
+ };
+ 
+ /**
+@@ -140,7 +140,7 @@ function resolvePaths(name, paths) {
+   var filePath;
+   if (paths.some(function (v) {
+     filePath = exports.resolveInclude(name, v, true);
+-    return fs.existsSync(filePath);
++    // return fs.existsSync(filePath);
+   })) {
+     return filePath;
+   }
+@@ -173,9 +173,9 @@ function getIncludePath(path, options) {
+     // Look relative to a passed filename first
+     if (options.filename) {
+       filePath = exports.resolveInclude(path, options.filename);
+-      if (fs.existsSync(filePath)) {
+-        includePath = filePath;
+-      }
++      // if (fs.existsSync(filePath)) {
++      //   includePath = filePath;
++      // }
+     }
+     // Then look in any views directories
+     if (!includePath && Array.isArray(views)) {
 @@ -632,9 +632,28 @@ Template.prototype = {
      else {
        src = this.source;
@@ -32,3 +99,12 @@ index 65590ea..adbe3ce 100755
        if (opts.compileDebug) {
          src = 'rethrow = rethrow || ' + rethrow.toString() + ';' + '\n' + src;
        }
+@@ -705,7 +724,7 @@ Template.prototype = {
+     };
+     if (opts.filename && typeof Object.defineProperty === 'function') {
+       var filename = opts.filename;
+-      var basename = path.basename(filename, path.extname(filename));
++      var basename = filename;//path.basename(filename, path.extname(filename));
+       try {
+         Object.defineProperty(returnedFn, 'name', {
+           value: basename,
