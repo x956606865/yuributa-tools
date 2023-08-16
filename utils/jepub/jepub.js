@@ -15,7 +15,8 @@ import bookConfig from './tpl/book.opf.ejs';
 // import mime from './tpl/mimetype';
 import toc from './tpl/toc.ncx.ejs';
 import JSZip from 'jszip';
-import * as ejs from './ejs.min';
+// import * as ejs from './ejs.min';
+import * as ejs from '../ejs/ejs';
 
 export default class jEpub {
   constructor() {
