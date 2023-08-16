@@ -18,6 +18,9 @@ import JSZip from 'jszip';
 // import * as ejs from './ejs.min';
 import * as ejs from '../ejs/ejs';
 
+function encode_char(c) {
+  return _ENCODE_HTML_RULES[c] || c;
+}
 export default class jEpub {
   constructor() {
     this._I18n = {};
@@ -195,6 +198,9 @@ export default class jEpub {
       if (!Array.isArray(content)) {
         const template = ejs.compile(content, {
           client: true,
+          escape: function (markup) {
+            return markup == undefined ? '' : String(markup).replace(/[&<>'"]/g, encode_char);
+          },
         });
         content = template(
           {
