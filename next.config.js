@@ -24,10 +24,8 @@ module.exports = withBundleAnalyzer({
       minimize: true,
       minimizer: [
         new TerserPlugin({
-          terserOptions: {
-            // 排除混淆node_modules文件夹中的文件
-            exclude: /node_modules/,
-          },
+          // 排除混淆node_modules文件夹中的文件
+          exclude: /node_modules/,
         }),
       ],
     };
