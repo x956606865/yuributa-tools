@@ -198,6 +198,7 @@ export default class jEpub {
       if (!Array.isArray(content)) {
         const template = ejs.compile(content, {
           client: true,
+          compileDebug: false,
           escape: function (markup) {
             return markup == undefined ? '' : String(markup).replace(/[&<>'"]/g, encode_char);
           },

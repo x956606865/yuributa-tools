@@ -367,6 +367,16 @@ function rethrow(err, str, flnm, lineno, esc) {
 function stripSemi(str) {
   return str.replace(/;(\s*$)/, '$1');
 }
+function encode_char(c) {
+  var _ENCODE_HTML_RULES = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&#34;',
+    "'": '&#39;',
+  };
+  return _ENCODE_HTML_RULES[c] || c;
+}
 
 /**
  * Compile the given `str` of ejs into a template function.
@@ -397,7 +407,14 @@ exports.compile = function compile(template, opts) {
     }
     delete opts.scope;
   }
+  opts.compileDebug = false;
+  //   opts.escape = function (markup) {
+  //     return markup == undefined ? '' : String(markup).replace(/[&<>'"]/g, encode_char);
+  //   };
+
+  //   console.log('%c [ opts ]-401', 'font-size:13px; background:pink; color:#bf2c9f;', opts);
   templ = new Template(template, opts);
+  //   console.log('%c [ templ ]-401', 'font-size:13px; background:pink; color:#bf2c9f;', templ);
   return templ.compile();
 };
 
@@ -644,8 +661,9 @@ Template.prototype = {
     }
 
     if (opts.client) {
-      //   src = 'escapeFn = escapeFn || ' + escapeFn.toString() + ';' + '\n' + src;
-      src = 'escapeFn = escapeFn;' + '\n' + src;
+      src = 'escapeFn = escapeFn || ' + utils.escapeXML.toString() + ';' + '\n' + src;
+
+      //   src = 'escapeFn = escapeFn;' + '\n' + src;
       if (opts.compileDebug) {
         src = 'rethrow = rethrow || ' + rethrow.toString() + ';' + '\n' + src;
       }
