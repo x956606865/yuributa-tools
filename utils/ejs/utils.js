@@ -58,10 +58,10 @@ var _ENCODE_HTML_RULES = {
 };
 var _MATCH_HTML = /[&<>'"]/g;
 
-export function encode_char(c) {
+function encode_char(c) {
   return _ENCODE_HTML_RULES[c] || c;
 }
-
+exports.encode_char = encode_char;
 /**
  * Stringified version of constants used by {@link module:utils.escapeXML}.
  *
