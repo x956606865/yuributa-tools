@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable no-plusplus */
 /* eslint-disable @typescript-eslint/no-shadow */
@@ -23,341 +24,55 @@ import {
   Radio,
   LoadingOverlay,
   TextInput,
+  NumberInput,
+  Grid,
+  Stack,
 } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import { useForm } from '@mantine/form';
 import { useListState } from '@mantine/hooks';
 import { IconPhoto, IconUpload, IconX } from '@tabler/icons';
-import { sortBy, uniq, uniqBy } from 'lodash';
+import { sortBy, uniqBy } from 'lodash';
 import { useEffect, useState } from 'react';
 import {
   base64ToImageUrl,
   calcSample,
+  checkPaddingDouble,
+  checkPaddingSingle,
+  getRandomSamples,
   loadImage,
   saveCBZ,
   saveEpub,
 } from '../../utils/output.util';
 
-async function checkPadding(img: any, { loggerHandler, form }: any) {
-  loggerHandler.append('开始检测padding...');
-
-  const imgObj: any = await loadImage(img);
-  const canvas = document.createElement('canvas');
-  const context: any = canvas.getContext('2d');
-  // 定义接近白色的颜色的阈值
-  const whiteThreshold = 240;
-  const blackThreshold = 60;
-  // 将图片绘制到 Canvas
-  canvas.width = imgObj.width;
-  canvas.height = imgObj.height;
-  context.drawImage(imgObj, 0, 0);
-
-  // 获取 Canvas 上每个像素的颜色数据
-  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-  const pixels = imageData.data;
-  const tempRed = pixels[0];
-  const tempGreen = pixels[1];
-  const tempBlue = pixels[2];
-  let middleFlag = 'white';
-  let flag = 'white';
-  if (form.values.autoDetectPaddingColor) {
-    if (tempRed >= whiteThreshold && tempBlue >= whiteThreshold && tempGreen >= whiteThreshold) {
-      flag = 'white';
-    } else {
-      flag = 'black';
-    }
-    const middleX = Math.floor(canvas.width / 2);
-    const middleIndex = middleX * 4;
-    const middleRed = pixels[middleIndex];
-    const middleGreen = pixels[middleIndex + 1];
-    const middleBlue = pixels[middleIndex + 2];
-    if (
-      middleRed >= whiteThreshold &&
-      middleGreen >= whiteThreshold &&
-      middleBlue >= whiteThreshold
-    ) {
-      middleFlag = 'white';
-    } else {
-      middleFlag = 'black';
-    }
-    loggerHandler.append(`检测两侧padding颜色为：${flag}`);
-    loggerHandler.append(`检测中间padding颜色为：${middleFlag}`);
-  } else {
-    middleFlag = form.values.middlePaddingColor;
-    flag = form.values.paddingColor;
+async function checkPadding(type: string, img: any, { loggerHandler, form }: any) {
+  if (type === 'single') {
+    return checkPaddingSingle(img, { loggerHandler, form });
   }
-
-  // 定义最大的左侧留白宽度
-  let leftMaxBlankWidth = canvas.width / 2;
-  // 定义最大的右侧留白宽度
-  let rightMaxBlankWidth = canvas.width / 2;
-  // 遍历像素数据，检测左侧留白的宽度
-  for (let y = 0; y < canvas.height; y++) {
-    let blankWidth = 0;
-    for (let x = 0; x < canvas.width / 2; x++) {
-      // 获取当前像素的颜色数据
-      const index = (x + y * canvas.width) * 4;
-      const red = pixels[index];
-      const green = pixels[index + 1];
-
-      const blue = pixels[index + 2];
-
-      // 判断像素是否接近白色
-      const isWhite = red >= whiteThreshold && green >= whiteThreshold && blue >= whiteThreshold;
-      const isBlack = red <= blackThreshold && green <= blackThreshold && blue <= blackThreshold;
-      //   loggerHandler.append(`当前为第${x}列${y}行，rgb为：${red},${green},${blue}`);
-      // 如果像素是白色，则留白宽度加一
-      if (flag === 'white') {
-        if (isWhite) {
-          blankWidth++;
-        } else {
-          // 如果遇到非白色像素，则停止遍历
-          break;
-        }
-      } else if (isBlack) {
-        blankWidth++;
-      } else {
-        // 如果遇到非黑色像素，则停止遍历
-        break;
-      }
-    }
-
-    // 更新最大的左侧留白宽度
-    if (blankWidth < leftMaxBlankWidth) {
-      leftMaxBlankWidth = blankWidth;
-    }
-
-    let rightBlankWidth = 0;
-    for (let x = canvas.width - 1; x >= canvas.width / 2; x--) {
-      // 获取当前像素的颜色数据
-      const index = (x + y * canvas.width) * 4;
-      const red = pixels[index];
-      const green = pixels[index + 1];
-      const blue = pixels[index + 2];
-
-      // 判断像素是否接近白色
-      const isWhite = red >= whiteThreshold && green >= whiteThreshold && blue >= whiteThreshold;
-      const isBlack = red <= blackThreshold && green <= blackThreshold && blue <= blackThreshold;
-
-      if (flag === 'white') {
-        if (isWhite) {
-          rightBlankWidth++;
-        } else {
-          // 如果遇到非白色像素，则停止遍历
-          break;
-        }
-      } else if (isBlack) {
-        rightBlankWidth++;
-      } else {
-        // 如果遇到非黑色像素，则停止遍历
-        break;
-      }
-    }
-
-    // 更新最大的右侧留白宽度
-    if (rightBlankWidth < rightMaxBlankWidth) {
-      rightMaxBlankWidth = rightBlankWidth;
-    }
-  }
-  // console.log(leftMaxBlankWidth, rightMaxBlankWidth);
-  let minPaddingWidth = Infinity;
-
-  // 遍历图像像素数据，检测留白的宽度
-  for (let x = Math.floor(canvas.width / 2); x >= 0; x--) {
-    let isEmptyColumn = true;
-    for (let y = 0; y < canvas.height; y++) {
-      const index = (y * canvas.width + x) * 4;
-      const red = pixels[index];
-      const green = pixels[index + 1];
-      const blue = pixels[index + 2];
-      const alpha = pixels[index + 3];
-      if (middleFlag === 'white') {
-        // 判断是否是接近白色的像素
-        if (
-          red < whiteThreshold ||
-          green < whiteThreshold ||
-          blue < whiteThreshold ||
-          alpha < whiteThreshold
-        ) {
-          isEmptyColumn = false;
-          break;
-        }
-      } else if (
-        red > blackThreshold ||
-        green > blackThreshold ||
-        blue > blackThreshold ||
-        alpha > blackThreshold
-      ) {
-        isEmptyColumn = false;
-        break;
-      }
-    }
-
-    // 找到第一个非空列
-    if (!isEmptyColumn) {
-      const leftX = x;
-      for (let i = Math.floor(canvas.width / 2); i < canvas.width; i++) {
-        let isEmptyColumn: any = true;
-        for (let y = 0; y < canvas.height; y++) {
-          const index = (y * canvas.width + i) * 4;
-          const red = pixels[index];
-          const green = pixels[index + 1];
-          const blue = pixels[index + 2];
-          const alpha = pixels[index + 3];
-
-          if (middleFlag === 'white') {
-            // 判断是否是接近白色的像素
-            if (
-              red < whiteThreshold ||
-              green < whiteThreshold ||
-              blue < whiteThreshold ||
-              alpha < whiteThreshold
-            ) {
-              isEmptyColumn = false;
-              break;
-            }
-          } else if (
-            red > blackThreshold ||
-            green > blackThreshold ||
-            blue > blackThreshold ||
-            alpha > blackThreshold
-          ) {
-            isEmptyColumn = false;
-            break;
-          }
-        }
-
-        // 找到第一个非空列
-        if (!isEmptyColumn) {
-          const rightX = i;
-          console.log(
-            '%c [ rightX ]-634',
-            'font-size:13px; background:pink; color:#bf2c9f;',
-            rightX
-          );
-          console.log('%c [ leftX ]-636', 'font-size:13px; background:pink; color:#bf2c9f;', leftX);
-
-          const paddingWidth = rightX - leftX;
-          if (paddingWidth < minPaddingWidth) {
-            minPaddingWidth = paddingWidth;
-          }
-          break;
-        }
-      }
-      break;
-    }
-  }
-  // console.log(
-  //   '%c [ minPaddingWidth ]-625',
-  //   'font-size:13px; background:pink; color:#bf2c9f;',
-  //   minPaddingWidth
-  // );
-  //   loggerHandler.append(
-  //     `检测结果为：左侧padding：${leftMaxBlankWidth}，右侧padding：${rightMaxBlankWidth}，颜色：${flag}。中间padding：${minPaddingWidth}，颜色：${middleFlag}`
-  //   );
-
-  return {
-    leftPadding: leftMaxBlankWidth,
-    rightPadding: rightMaxBlankWidth,
-    middleWidth: minPaddingWidth,
-  };
+  return checkPaddingDouble(img, { loggerHandler, form });
 }
 
-async function processImages2(imgList: any, targetImgSize: any, { loggerHandler, form }: any) {
-  const checkMethod = form.values.paddingCheckMethod;
-  const paddingResult: any = {};
-  if (imgList.length === 0) {
-    return [];
-  }
-  if (!form.values.isProcessPadding) {
-    paddingResult.leftPadding = 0
-    paddingResult.rightPadding = 0
-    paddingResult.middleWidth = 0
-  } else if (checkMethod === 'sample') {
-    let sampleIndex;
-    if (imgList.length > 3) {
-      sampleIndex = uniq([2, 3, Math.ceil(imgList.length / 2), imgList.length - 2]);
-    } else {
-      sampleIndex = [0];
-    }
-    const r: any = {
-      leftPadding: [],
-      rightPadding: [],
-      middleWidth: [],
-    };
-    // eslint-disable-next-line no-restricted-syntax
-    for (const i of sampleIndex) {
-      const img = imgList[i];
-      // eslint-disable-next-line no-await-in-loop
-      const { leftPadding, rightPadding, middleWidth } = await checkPadding(img, {
-        loggerHandler,
-        form,
-      });
-      r.leftPadding.push(leftPadding);
-      r.rightPadding.push(rightPadding);
-      r.middleWidth.push(middleWidth);
-    }
-    if (sampleIndex.length > 3) {
-      paddingResult.leftPadding = calcSample(r.leftPadding);
-      paddingResult.rightPadding = calcSample(r.rightPadding);
-      paddingResult.middleWidth = calcSample(r.middleWidth);
-    } else {
-      paddingResult.leftPadding = r.leftPadding[0];
-      paddingResult.rightPadding = r.rightPadding[0];
-      paddingResult.middleWidth = r.middleWidth[0];
-    }
-  }
-
+async function splitMangaList(imgList: any, targetImgSize: any, { loggerHandler, form, paddingResult, coverName }: any) {
   const promises = imgList.map(async (img: any, index: any) => {
     console.log(`process images ${index + 1}/${imgList.length}`);
     loggerHandler.append(`process images ${index}/${imgList.length}`);
+    if (img.name === coverName) {
+      return {
+        skip: true,
+      };
+    }
     let leftPadding;
     let rightPadding;
     let middleWidth;
-    if (form.values.paddingCheckMethod === 'sample' || !form.values.isProcessPadding) {
+    if (form.values.paddingCheckMethod === 'sample' || !form.values.isProcessPadding || !form.values.autoDetectPaddingWidth) {
       ({ leftPadding, rightPadding, middleWidth } = paddingResult);
     } else {
-      ({ leftPadding, rightPadding, middleWidth } = await checkPadding(img, {
+      ({ leftPadding, rightPadding, middleWidth } = await checkPadding('double', img, {
         form,
         loggerHandler,
       }));
     }
     loggerHandler.append(`使用的padding为：${leftPadding},${rightPadding},${middleWidth}`);
-
-    if (img.name.includes('cover')) {
-      const paddings = await checkPadding(img, {
-        form,
-        loggerHandler,
-      });
-      loggerHandler.append(
-        `Cover 使用的padding为：${paddings.leftPadding},${paddings.rightPadding},${paddings.middleWidth}`
-      );
-
-      const imgObj: any = await loadImage(img);
-      const canvas = document.createElement('canvas');
-      const ctx: any = canvas.getContext('2d');
-      const imgWidth = imgObj.width - paddings.leftPadding - paddings.rightPadding;
-
-      canvas.width = imgWidth;
-
-      canvas.height = imgObj.height;
-
-      ctx.drawImage(
-        imgObj,
-        paddings.leftPadding,
-        0,
-        imgWidth,
-        imgObj.height,
-        0,
-        0,
-        imgWidth,
-        imgObj.height
-      );
-      return {
-        cover: canvas.toDataURL('image/jpeg', 0.8),
-        name: img.name,
-      };
-    }
 
     // Load the image into an Image object
     const imgObj: any = await loadImage(img);
@@ -490,17 +205,255 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
 
   return Promise.all(promises);
 }
+async function resizeMangaList(imgList: any, targetImgSize: any, { loggerHandler, form, paddingResult, coverName }: any) {
+  const promises = imgList.map(async (img: any, index: any) => {
+    console.log(`process images ${index + 1}/${imgList.length}`);
+    loggerHandler.append(`process images ${index}/${imgList.length}`);
+    if (img.name === coverName) {
+      return {
+        skip: true,
+      };
+    }
+    let leftPadding;
+    let rightPadding;
+    if (form.values.paddingCheckMethod === 'sample') {
+      ({ leftPadding, rightPadding } = paddingResult);
+    } else {
+      ({ leftPadding, rightPadding } = await checkPadding('single', img, {
+        form,
+        loggerHandler,
+      }));
+    }
+    loggerHandler.append(`使用的padding为：${leftPadding},${rightPadding}`);
+
+    // Load the image into an Image object
+    const imgObj: any = await loadImage(img);
+
+    // Split the image into two halves
+    const leftCanvas = document.createElement('canvas');
+
+    const leftCtx: any = leftCanvas.getContext('2d');
+    const imgWidth = imgObj.width - leftPadding - rightPadding;
+    leftCanvas.width = targetImgSize.width;
+    leftCanvas.height = targetImgSize.height;
+    // 设置默认背景色
+    leftCtx.fillStyle = '#fff';
+
+    // 填充整个 Canvas
+    leftCtx.fillRect(0, 0, leftCanvas.width, leftCanvas.height);
+
+    if (imgWidth > targetImgSize.width || imgObj.height > targetImgSize.height) {
+      console.log('bigger');
+      const canvas = document.createElement('canvas');
+      const ctx: any = canvas.getContext('2d');
+      // 确定缩放比例
+      const scale = Math.min(targetImgSize.width / imgWidth, targetImgSize.height / imgObj.height);
+
+      // 根据缩放比例计算缩放后的图像尺寸
+      const scaledWidth = imgWidth * scale;
+      const scaledHeight = imgObj.height * scale;
+      loggerHandler.append(`scaledWidth:${scaledWidth},scaledHeight:${scaledHeight}`);
+      canvas.height = scaledHeight;
+      canvas.width = scaledWidth * 2;
+      // Draw the cropped image onto the canvas
+      ctx.drawImage(
+        imgObj,
+        leftPadding,
+        0,
+        imgWidth,
+        imgObj.height,
+        0,
+        0,
+        scaledWidth,
+        scaledHeight
+      );
+
+      const newPadding = (targetImgSize.width - scaledWidth) / 2;
+      leftCtx.drawImage(
+        canvas,
+        0,
+        0,
+        scaledWidth,
+        scaledHeight,
+        newPadding,
+        0,
+        scaledWidth,
+        scaledHeight
+      );
+    } else {
+      console.log('smaller');
+      // 确定缩放比例
+      const scale = Math.min(targetImgSize.width / imgWidth, targetImgSize.height / imgObj.height);
+
+      // 根据缩放比例计算缩放后的图像尺寸
+      const scaledWidth = imgWidth * scale;
+
+      const scaledHeight = imgObj.height * scale;
+
+      const newPadding = (targetImgSize.width - scaledWidth) / 2;
+
+      leftCtx.drawImage(
+        imgObj,
+        leftPadding,
+        0,
+        imgWidth,
+        imgObj.height,
+        newPadding,
+        (targetImgSize.height - scaledHeight) / 2,
+        scaledWidth,
+        scaledHeight
+      );
+    }
+
+    // Convert both canvases to base64 format and return them as an object
+    return {
+      file: leftCanvas.toDataURL('image/jpeg', 0.8),
+      name: img.name,
+    };
+  });
+
+  return Promise.all(promises);
+}
+async function processImages2(imgList: any, targetImgSize: any, { loggerHandler, form, coverName }: any) {
+  const checkMethod = form.values.paddingCheckMethod;
+  const paddingResult: any = {};
+  if (imgList.length === 0) {
+    return [];
+  }
+  if (form.values.extraProcess === 'none') {
+    const promises = imgList.map(async (img: any) => {
+      const imgObj: any = await loadImage(img);
+      const canvas = document.createElement('canvas');
+      const ctx: any = canvas.getContext('2d');
+      const imgWidth = imgObj.width;
+      canvas.width = imgWidth;
+      canvas.height = imgObj.height;
+      ctx.drawImage(
+        imgObj,
+        0,
+        0,
+        imgWidth,
+        imgObj.height,
+        0,
+        0,
+        imgWidth,
+        imgObj.height
+      );
+      if (img.name.includes('cover')) {
+        return {
+          cover: canvas.toDataURL('image/jpeg', 0.8),
+          name: img.name,
+        };
+      }
+      return {
+        file: canvas.toDataURL('image/jpeg', 0.8),
+        name: img.name,
+      };
+    });
+    return Promise.all(promises);
+  }
+  if (!form.values.isProcessPadding) {
+    paddingResult.leftPadding = 0;
+    paddingResult.rightPadding = 0;
+    paddingResult.middleWidth = 0;
+  } else if (!form.values.autoDetectPaddingWidth) {
+    paddingResult.leftPadding = form.values.custumLeftPadding;
+    paddingResult.rightPadding = form.values.custumRightPadding;
+    paddingResult.middleWidth = form.values.custumMiddlePadding;
+  } else if (checkMethod === 'sample') {
+    const sampleIndex = getRandomSamples(imgList);
+
+    const r: any = {
+      leftPadding: [],
+      rightPadding: [],
+      middleWidth: [],
+    };
+    // eslint-disable-next-line no-restricted-syntax
+    for (const i of sampleIndex) {
+      const img = imgList[i];
+      // eslint-disable-next-line no-await-in-loop
+      const { leftPadding, rightPadding, middleWidth } = await checkPadding('double', img, {
+        loggerHandler,
+        form,
+      });
+      r.leftPadding.push(leftPadding);
+      r.rightPadding.push(rightPadding);
+      r.middleWidth.push(middleWidth);
+    }
+    if (sampleIndex.length > 3) {
+      paddingResult.leftPadding = calcSample(r.leftPadding);
+      paddingResult.rightPadding = calcSample(r.rightPadding);
+      paddingResult.middleWidth = calcSample(r.middleWidth);
+    } else {
+      paddingResult.leftPadding = r.leftPadding[0];
+      paddingResult.rightPadding = r.rightPadding[0];
+      paddingResult.middleWidth = r.middleWidth[0];
+    }
+  }
+  if (form.values.extraProcess === 'resize') {
+    return resizeMangaList(imgList, targetImgSize, { loggerHandler, form, paddingResult, coverName });
+  } if (form.values.extraProcess === 'split') {
+    return splitMangaList(imgList, targetImgSize, { loggerHandler, form, paddingResult, coverName });
+  }
+  return [];
+}
+async function processCover(img: any, { form,
+  loggerHandler }: any) {
+  const paddings = await checkPadding('single', img, {
+    form,
+    loggerHandler,
+  });
+  loggerHandler.append(
+    `Cover 使用的padding为：${paddings.leftPadding},${paddings.rightPadding}`
+  );
+
+  const imgObj: any = await loadImage(img);
+  const canvas = document.createElement('canvas');
+  const ctx: any = canvas.getContext('2d');
+  const imgWidth = imgObj.width - paddings.leftPadding - paddings.rightPadding;
+
+  canvas.width = imgWidth;
+
+  canvas.height = imgObj.height;
+
+  ctx.drawImage(
+    imgObj,
+    paddings.leftPadding,
+    0,
+    imgWidth,
+    imgObj.height,
+    0,
+    0,
+    imgWidth,
+    imgObj.height
+  );
+  return {
+    cover: canvas.toDataURL('image/jpeg', 0.8),
+    name: img.name,
+  };
+}
 const SizePreset: any = {
   leaf2: {
     width: 1264,
     height: 1680,
+    label: 'BOOX Leaf2',
   },
   default: {
     width: 1080,
     height: 1920,
+    label: 'Default (1080p)',
+  },
+  custom: {
+    width: 0,
+    height: 0,
+    label: '自定义',
   },
 };
-
+const ProcessType: any = {
+  none: '无',
+  split: '漫画拆分',
+  resize: '漫画Resize',
+};
 export default function HomePage() {
   const theme = useMantineTheme();
   const [fileList, fileListHandler] = useListState<any>([]);
@@ -516,11 +469,15 @@ export default function HomePage() {
       imgType: 'image/jpeg',
       targetDevice: 'leaf2',
       readFrom: 'rtl',
+      extraProcess: 'none',
       autoDetectPaddingColor: true,
+      autoDetectPaddingWidth: true,
       isProcessPadding: true,
-      custumLeftPadding:0,
-      custumRightPadding:0,
-      custumMiddlePadding:0,
+      custumDeviceWidth: 0,
+      custumDeviceHeight: 0,
+      custumLeftPadding: 0,
+      custumRightPadding: 0,
+      custumMiddlePadding: 0,
       paddingColor: 'white',
       middlePaddingColor: 'white',
       whiteThreshold: 240,
@@ -539,19 +496,27 @@ export default function HomePage() {
     const unProcessedList = fileList.filter(
       (item) => !resultImgs.find((ri: { name: any }) => ri.name === item.name)
     );
+    let deviceSize = SizePreset[form.values.targetDevice ?? 'default'];
+    if (form.values.targetDevice === 'custom') {
+      deviceSize = {
+        width: form.values.custumDeviceWidth,
+        height: form.values.custumDeviceHeight,
+      };
+    }
     const processedList = await processImages2(
       unProcessedList,
-      SizePreset[form.values.targetDevice ?? 'default'],
+      deviceSize,
       {
         loggerHandler,
         form,
+        coverName: coverImg.name,
       }
     );
     const newList: any = [];
     const { readFrom } = form.values;
     processedList.forEach((item) => {
       if (item.cover) {
-        setCoverImg(item.cover);
+        setCoverImg(item);
         return;
       }
       if (item.left) {
@@ -564,6 +529,12 @@ export default function HomePage() {
         newList.push({
           file: item.right,
           name: `${item.name.replace(/\.\w+$/, '')}_${readFrom === 'rtl' ? '00' : '01'}.jpg`,
+        });
+      }
+      if (item.file) {
+        newList.push({
+          file: item.file,
+          name: `${item.name}.jpg`,
         });
       }
     });
@@ -583,7 +554,16 @@ export default function HomePage() {
   };
   useEffect(() => {
     setResultImgs([]);
-    setCoverImg(null);
+    // setCoverImg(null);
+    // if (coverImg) {
+
+    //   processCover(coverImg.file, { form, loggerHandler }).then(result => base64ToImageUrl(result.cover).then(imageUrl => {
+    //     setCoverImg({
+    //       ...result,
+    //       imageUrl
+    //     })
+    //   }))
+    // }
     loggerHandler.setState([]);
     setPreviewList([]);
   }, [form.values]);
@@ -611,19 +591,7 @@ export default function HomePage() {
               ]}
               {...form.getInputProps('imgType')}
             />
-            <Select
-              mt={10}
-              name="readFrom"
-              label="选择漫画翻页类型"
-              placeholder="Pick one"
-              searchable
-              nothingFound="No options"
-              data={[
-                { label: '从右往左', value: 'rtl' },
-                { label: '从左往右', value: 'ltr' },
-              ]}
-              {...form.getInputProps('readFrom')}
-            />
+
             <Select
               mt={10}
               name="targetDevice"
@@ -631,14 +599,37 @@ export default function HomePage() {
               placeholder="Pick one"
               searchable
               nothingFound="No options"
-              data={[{ label: 'BOOX Leaf2', value: 'leaf2' }]}
+              data={Object.entries(SizePreset).map(([key, v]: any) => ({ label: v.label, value: key }))}
               {...form.getInputProps('targetDevice')}
             />
+            {
+              form.values.targetDevice === 'custom' && (
+                <Group mt={20}>
+                  <NumberInput label="自定义宽度" {...form.getInputProps('custumDeviceWidth')} />
+                  <NumberInput label="自定义高度" {...form.getInputProps('custumDeviceHeigth')} />
+                </Group>)
+            }
             <Dropzone
               mt={20}
               onDrop={(files) => {
                 console.log('accepted files', files);
-                const uniqueList = uniqBy([...fileList, ...files], 'name');
+                const uniqueList = sortBy(uniqBy([...fileList, ...files], 'name'), f => f.name);
+                if (!coverImg) {
+                  // 尝试嗅探封面
+                  const cover = uniqueList.find(f => f.name.includes('cover'));
+                  let target;
+                  if (cover) {
+                    target = cover;
+                  } else {
+                    target = uniqueList[0];
+                  }
+                  processCover(target, { form, loggerHandler }).then(result => base64ToImageUrl(result.cover).then(imageUrl => {
+                    setCoverImg({
+                      ...result,
+                      imageUrl,
+                    });
+                  }));
+                }
                 fileListHandler.setState(uniqueList);
               }}
               //   onReject={(files) => console.log('rejected files', files)}
@@ -682,99 +673,212 @@ export default function HomePage() {
                 </div>
               </Group>
             </Dropzone>
-            <Accordion defaultValue="" mt={20}>
+            <Accordion defaultValue="baseInfo" mt={20}>
+              <Accordion.Item value="baseInfo">
+                <Accordion.Control>基础信息</Accordion.Control>
+                <Accordion.Panel pl={20} pr={20}>
+                  {
+                    fileList.length > 0 ? (
+                      <Grid>
+                        <Grid.Col span={4}>
+                          {
+                            coverImg && (
+                              <Stack>
+                                <MImage
+                                  width={200}
+                                  height="100%"
+                                  src={coverImg.imageUrl}
+                                  imageProps={{ onLoad: () => URL.revokeObjectURL(coverImg.imageUrl) }}
+                                />
+                                <Select
+                                  value={coverImg.name}
+                                  w={200}
+                                  data={fileList.map(f => ({ value: f.name, label: f.name, disabled: f.name === coverImg.name }))}
+                                  onChange={fileName => {
+                                    const cover = fileList.find(f => f.name === fileName);
+                                    let target;
+                                    if (cover) {
+                                      target = cover;
+                                      processCover(target, { form, loggerHandler }).then(result => base64ToImageUrl(result.cover).then(imageUrl => {
+                                        setCoverImg({
+                                          ...result,
+                                          imageUrl,
+                                        });
+                                      }));
+                                    }
+                                  }}
+                                />
+                              </Stack>
+                            )
+                          }
+
+                        </Grid.Col>
+                        <Grid.Col span={8}>
+                          <ScrollArea h={250}>
+                            <Group>
+                              <Text fw={700}>已处理文件/当前文件:</Text> <Text color="green">{`${resultImgs.length}/${fileList.length}`}</Text>
+
+                            </Group>
+                            <Group>
+                              <Text fw={700}>保存为:</Text><Text color="green"> {`${form.values.fileName}.${form.values.outputType}`}</Text>
+                            </Group>
+                            <Group>
+                              <Text fw={700}>输出分辨率:</Text><Text color="green"> {`${form.values.targetDevice === 'custom' ? form.values.custumDeviceWidth : SizePreset[form.values.targetDevice].width}x${form.values.targetDevice === 'custom' ? form.values.custumDeviceHeight : SizePreset[form.values.targetDevice].height}`}</Text>
+                            </Group>
+                            <Group>
+                              <Text fw={700}>额外处理:</Text><Text color="green"> {ProcessType[form.values.extraProcess]}</Text>
+                            </Group>
+                          </ScrollArea>
+                        </Grid.Col>
+                      </Grid>
+                    )
+                      : <Center>请上传图片</Center>
+                  }
+
+                </Accordion.Panel>
+              </Accordion.Item>
               <Accordion.Item value="setting">
                 <Accordion.Control>处理设置</Accordion.Control>
-                <Accordion.Panel>
-                  <Group>
-                    <Switch
-                      label="裁剪padding"
-                      name="isProcessPadding"
-                      {...form.getInputProps('isProcessPadding', { type: 'checkbox' })}
-                    />
-                    {
-                      form.values.isProcessPadding && (
-                        <Switch
-                          label="自动检测padding颜色"
-                          name="autoDetectPaddingColor"
-                          {...form.getInputProps('autoDetectPaddingColor', { type: 'checkbox' })}
+                <Accordion.Panel pl={20} pr={20}>
+                  <Select
+                    mt={10}
+                    name="extraProcess"
+                    label="额外处理"
+                    placeholder="Pick one"
+                    searchable
+                    nothingFound="No options"
+                    data={Object.keys(ProcessType).map(k => ({ label: ProcessType[k], value: k }))}
+                    {...form.getInputProps('extraProcess')}
+                  />
+                  {
+                    form.values.extraProcess !== 'none' && (
+                      <Box mt={20}>
+                        {
+                          form.values.extraProcess === 'split' && (
+                            <Select
+                              mt={10}
+                              name="readFrom"
+                              label="选择漫画翻页类型"
+                              placeholder="Pick one"
+                              searchable
+                              nothingFound="No options"
+                              data={[
+                                { label: '从右往左', value: 'rtl' },
+                                { label: '从左往右', value: 'ltr' },
+                              ]}
+                              {...form.getInputProps('readFrom')}
+                            />
+                          )
+                        }
+                        <Group mt={20}>
+                          <Switch
+                            label="裁剪padding"
+                            name="isProcessPadding"
+                            {...form.getInputProps('isProcessPadding', { type: 'checkbox' })}
+                          />
+                          {
+                            form.values.isProcessPadding && (
+                              <Switch
+                                label="自动检测padding颜色"
+                                name="autoDetectPaddingColor"
+                                {...form.getInputProps('autoDetectPaddingColor', { type: 'checkbox' })}
+                              />
+                            )
+                          }
+                          {
+                            form.values.isProcessPadding && (
+                              <Switch
+                                label="自动检测padding宽度"
+                                name="autoDetectPaddingWidth"
+                                {...form.getInputProps('autoDetectPaddingWidth', { type: 'checkbox' })}
+                              />
+                            )
+                          }
+                        </Group>
+
+                        {!form.values.autoDetectPaddingColor && (
+                          <Box mt={10}>
+                            <Select
+                              mt={10}
+                              name="paddingColor"
+                              label="两边padding颜色"
+                              placeholder="Pick one"
+                              searchable
+                              nothingFound="No options"
+                              data={[
+                                { label: '白色', value: 'white' },
+                                { label: '黑色', value: 'black' },
+                              ]}
+                              {...form.getInputProps('paddingColor')}
+                            />
+                            <Select
+                              mt={10}
+                              name="middlePaddingColor"
+                              label="中间padding颜色"
+                              placeholder="Pick one"
+                              searchable
+                              nothingFound="No options"
+                              data={[
+                                { label: '白色', value: 'white' },
+                                { label: '黑色', value: 'black' },
+                              ]}
+                              {...form.getInputProps('middlePaddingColor')}
+                            />
+                          </Box>
+                        )}
+                        {
+                          !form.values.autoDetectPaddingWidth && (
+                            <Group mt={20}>
+                              <NumberInput label="自定义左侧padding宽度" {...form.getInputProps('custumLeftPadding')} />
+                              <NumberInput label="自定义右侧padding宽度" {...form.getInputProps('custumRightPadding')} />
+                              <NumberInput label="自定义中间padding宽度" {...form.getInputProps('custumMiddlePadding')} />
+                            </Group>)
+                        }
+                        <Radio.Group
+                          mt={20}
+                          name="paddingCheckMethod"
+                          label="Padding的检测方式"
+                          {...form.getInputProps('paddingCheckMethod')}
+                        >
+                          <Group mt="xs">
+                            <Radio value="full" label="全量检测" />
+                            <Radio value="sample" label="样本检测" />
+                          </Group>
+                        </Radio.Group>
+
+                        <Title mt={20} order={6}>
+                          白色检测阈值
+                        </Title>
+
+                        <Slider
+                          labelAlwaysOn
+                          mt={10}
+                          label={form.values.whiteThreshold}
+                          min={0}
+                          max={255}
+                          name="whiteThreshold"
+                          {...form.getInputProps('whiteThreshold')}
                         />
-                      )
-                    }
+                        <Title mt={20} order={6}>
+                          黑色检测阈值
+                        </Title>
+                        <Slider
+                          labelAlwaysOn
+                          mt={10}
+                          label={form.values.blackThreshold}
+                          min={0}
+                          max={255}
+                          name="blackThreshold"
+                          {...form.getInputProps('blackThreshold')}
+                        />
+                      </Box>)
+                  }
 
-                  </Group>
-
-                  {!form.values.autoDetectPaddingColor && (
-                    <Box mt={10}>
-                      <Select
-                        mt={10}
-                        name="paddingColor"
-                        label="两边padding颜色"
-                        placeholder="Pick one"
-                        searchable
-                        nothingFound="No options"
-                        data={[
-                          { label: '白色', value: 'white' },
-                          { label: '黑色', value: 'black' },
-                        ]}
-                        {...form.getInputProps('paddingColor')}
-                      />
-                      <Select
-                        mt={10}
-                        name="middlePaddingColor"
-                        label="中间padding颜色"
-                        placeholder="Pick one"
-                        searchable
-                        nothingFound="No options"
-                        data={[
-                          { label: '白色', value: 'white' },
-                          { label: '黑色', value: 'black' },
-                        ]}
-                        {...form.getInputProps('middlePaddingColor')}
-                      />
-                    </Box>
-                  )}
-                  <Radio.Group
-                    mt={20}
-                    name="paddingCheckMethod"
-                    label="Padding的检测方式"
-                    {...form.getInputProps('paddingCheckMethod')}
-                  >
-                    <Group mt="xs">
-                      <Radio value="full" label="全量检测" />
-                      <Radio value="sample" label="样本检测" />
-                    </Group>
-                  </Radio.Group>
-                  <Title mt={20} order={6}>
-                    白色检测阈值
-                  </Title>
-
-                  <Slider
-                    labelAlwaysOn
-                    mt={10}
-                    label={form.values.whiteThreshold}
-                    min={0}
-                    max={255}
-                    name="whiteThreshold"
-                    {...form.getInputProps('whiteThreshold')}
-                  />
-                  <Title mt={20} order={6}>
-                    黑色检测阈值
-                  </Title>
-                  <Slider
-                    labelAlwaysOn
-                    mt={10}
-                    label={form.values.blackThreshold}
-                    min={0}
-                    max={255}
-                    name="blackThreshold"
-                    {...form.getInputProps('blackThreshold')}
-                  />
                 </Accordion.Panel>
               </Accordion.Item>
               <Accordion.Item value="bookInfo">
                 <Accordion.Control>输出设置</Accordion.Control>
-                <Accordion.Panel>
+                <Accordion.Panel pl={20} pr={20}>
                   <Box mt={10}>
                     <Select
                       mt={10}
@@ -802,22 +906,20 @@ export default function HomePage() {
 
               <Accordion.Item value="logger">
                 <Accordion.Control>日志</Accordion.Control>
-                <Accordion.Panel>
+                <Accordion.Panel pl={20} pr={20}>
                   <ScrollArea h={250}>
-                    {logger.map((log: any) => {
-                      return (
-                        <>
-                          <Text>{log}</Text>
-                          <br />
-                        </>
-                      );
-                    })}
+                    {logger.map((log: any) => (
+                      <>
+                        <Text>{log}</Text>
+                        <br />
+                      </>
+                    ))}
                   </ScrollArea>
                 </Accordion.Panel>
               </Accordion.Item>
               <Accordion.Item value="preview">
                 <Accordion.Control>结果预览</Accordion.Control>
-                <Accordion.Panel>
+                <Accordion.Panel pl={20} pr={20}>
                   <ScrollArea h={250}>
                     <SimpleGrid
                       cols={4}
@@ -847,7 +949,13 @@ export default function HomePage() {
               <Button mt={20} onClick={() => loggerHandler.setState([])}>
                 清除日志
               </Button>
-              <Button mt={20} onClick={() => fileListHandler.setState([])}>
+              <Button
+                mt={20}
+                onClick={() => {
+                  fileListHandler.setState([]);
+                  setResultImgs([]);
+                }}
+              >
                 清空文件
               </Button>
               <Button
@@ -864,9 +972,9 @@ export default function HomePage() {
                 onClick={async () => {
                   setGlobalLoading(true);
                   if (form.values.outputType === 'cbz') {
-                    await saveCBZ(resultImgs, coverImg);
+                    await saveCBZ(resultImgs, coverImg.cover);
                   } else {
-                    await saveEpub(form, resultImgs, coverImg);
+                    await saveEpub(form, resultImgs, coverImg.cover);
                   }
                   setGlobalLoading(false);
                   setResultImgs([]);
