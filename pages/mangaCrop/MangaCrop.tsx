@@ -269,7 +269,11 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
   if (imgList.length === 0) {
     return [];
   }
-  if (checkMethod === 'sample') {
+  if (!form.values.isProcessPadding) {
+    paddingResult.leftPadding = 0
+    paddingResult.rightPadding = 0
+    paddingResult.middleWidth = 0
+  } else if (checkMethod === 'sample') {
     let sampleIndex;
     if (imgList.length > 3) {
       sampleIndex = uniq([2, 3, Math.ceil(imgList.length / 2), imgList.length - 2]);
@@ -303,13 +307,14 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
       paddingResult.middleWidth = r.middleWidth[0];
     }
   }
+
   const promises = imgList.map(async (img: any, index: any) => {
     console.log(`process images ${index + 1}/${imgList.length}`);
     loggerHandler.append(`process images ${index}/${imgList.length}`);
     let leftPadding;
     let rightPadding;
     let middleWidth;
-    if (form.values.paddingCheckMethod === 'sample') {
+    if (form.values.paddingCheckMethod === 'sample' || !form.values.isProcessPadding) {
       ({ leftPadding, rightPadding, middleWidth } = paddingResult);
     } else {
       ({ leftPadding, rightPadding, middleWidth } = await checkPadding(img, {
@@ -512,6 +517,10 @@ export default function HomePage() {
       targetDevice: 'leaf2',
       readFrom: 'rtl',
       autoDetectPaddingColor: true,
+      isProcessPadding: true,
+      custumLeftPadding:0,
+      custumRightPadding:0,
+      custumMiddlePadding:0,
       paddingColor: 'white',
       middlePaddingColor: 'white',
       whiteThreshold: 240,
@@ -578,9 +587,7 @@ export default function HomePage() {
     loggerHandler.setState([]);
     setPreviewList([]);
   }, [form.values]);
-  console.log({
-    [form.values.imgType]: form.values.imgType === 'application/rar' ? ['.rar'] : [],
-  });
+
   return (
     <>
       <Box pos="relative">
@@ -588,7 +595,7 @@ export default function HomePage() {
           <Container w="80%">
             <LoadingOverlay visible={globalLoading} style={{ height: '100%' }} />
             <Title ta="center" order={1}>
-              漫画拆分
+              漫画打包
             </Title>
             <Select
               mt={10}
@@ -640,7 +647,7 @@ export default function HomePage() {
                 [form.values.imgType]:
                   form.values.imgType === 'application/vnd.rar' ? ['.rar'] : [],
               }}
-              //   {...props}
+            //   {...props}
             >
               <Group
                 position="center"
@@ -676,41 +683,27 @@ export default function HomePage() {
               </Group>
             </Dropzone>
             <Accordion defaultValue="" mt={20}>
-              <Accordion.Item value="bookInfo">
-                <Accordion.Control>输出设置</Accordion.Control>
-                <Accordion.Panel>
-                  <Box mt={10}>
-                    <Select
-                      mt={10}
-                      name="outputType"
-                      label="输出格式"
-                      placeholder="Pick one"
-                      searchable
-                      nothingFound="No options"
-                      data={[
-                        { label: 'epub', value: 'epub' },
-                        { label: 'cbz', value: 'cbz' },
-                      ]}
-                      {...form.getInputProps('outputType')}
-                    />
-                    <TextInput mt={20} label="文件名称" {...form.getInputProps('fileName')} />
-                    {form.values.outputType === 'epub' && (
-                      <TextInput mt={20} label="作品名称" {...form.getInputProps('name')} />
-                    )}
-                    {form.values.outputType === 'epub' && (
-                      <TextInput mt={20} label="作者" {...form.getInputProps('author')} />
-                    )}
-                  </Box>
-                </Accordion.Panel>
-              </Accordion.Item>
               <Accordion.Item value="setting">
-                <Accordion.Control>高级设置</Accordion.Control>
+                <Accordion.Control>处理设置</Accordion.Control>
                 <Accordion.Panel>
-                  <Switch
-                    label="自动检测padding颜色"
-                    name="autoDetectPaddingColor"
-                    {...form.getInputProps('autoDetectPaddingColor', { type: 'checkbox' })}
-                  />
+                  <Group>
+                    <Switch
+                      label="裁剪padding"
+                      name="isProcessPadding"
+                      {...form.getInputProps('isProcessPadding', { type: 'checkbox' })}
+                    />
+                    {
+                      form.values.isProcessPadding && (
+                        <Switch
+                          label="自动检测padding颜色"
+                          name="autoDetectPaddingColor"
+                          {...form.getInputProps('autoDetectPaddingColor', { type: 'checkbox' })}
+                        />
+                      )
+                    }
+
+                  </Group>
+
                   {!form.values.autoDetectPaddingColor && (
                     <Box mt={10}>
                       <Select
@@ -779,6 +772,34 @@ export default function HomePage() {
                   />
                 </Accordion.Panel>
               </Accordion.Item>
+              <Accordion.Item value="bookInfo">
+                <Accordion.Control>输出设置</Accordion.Control>
+                <Accordion.Panel>
+                  <Box mt={10}>
+                    <Select
+                      mt={10}
+                      name="outputType"
+                      label="输出格式"
+                      placeholder="Pick one"
+                      searchable
+                      nothingFound="No options"
+                      data={[
+                        { label: 'epub', value: 'epub' },
+                        { label: 'cbz', value: 'cbz' },
+                      ]}
+                      {...form.getInputProps('outputType')}
+                    />
+                    <TextInput mt={20} label="文件名称" {...form.getInputProps('fileName')} />
+                    {form.values.outputType === 'epub' && (
+                      <TextInput mt={20} label="作品名称" {...form.getInputProps('name')} />
+                    )}
+                    {form.values.outputType === 'epub' && (
+                      <TextInput mt={20} label="作者" {...form.getInputProps('author')} />
+                    )}
+                  </Box>
+                </Accordion.Panel>
+              </Accordion.Item>
+
               <Accordion.Item value="logger">
                 <Accordion.Control>日志</Accordion.Control>
                 <Accordion.Panel>
@@ -861,67 +882,7 @@ export default function HomePage() {
           </Container>
         </Center>
       </Box>
-      {/* <div class="max-w-lg mx-auto">
-        <h1 class="text-2xl font-bold mb-5">Image Cropper</h1>
-        <div class="mb-5">
-          <label for="image-type" class="block font-medium mb-2">
-            选择图片类型:
-          </label>
-          <select
-            id="image-type"
-            name="image-type"
-            class="w-full bg-gray-100 text-gray-800 py-2 px-4 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="image/jpeg">JPEG</option>
-            <option value="image/png">PNG</option>
-            <option value="image/gif">GIF</option>
-          </select>
-        </div>
-        <div class="mb-5">
-          <label for="targetDevice" class="block font-medium mb-2">
-            目标机型:
-          </label>
-          <select
-            id="targetDevice"
-            name="targetDevice"
-            class="w-full bg-gray-100 text-gray-800 py-2 px-4 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="leaf2">BOOX Leaf2</option>
-          </select>
-        </div>
 
-        <div class="mb-5">
-          <label for="images" class="block mb-2">
-            Select Images
-          </label>
-          <input
-            type="file"
-            name="images"
-            id="images"
-            class="block w-full border p-2 rounded-md"
-            accept="image/*"
-            multiple
-          />
-        </div>
-        <button id="previewBtn" class="bg-blue-500 text-white py-2 px-4 rounded-md">
-          预览
-        </button>
-        <button id="clearPreview" class="bg-blue-500 text-white py-2 px-4 rounded-md">
-          清空预览
-        </button>
-        <button
-          id="processBtn"
-          class="bg-blue-500 text-white py-2 px-4 rounded-md disabled:opacity-50"
-        >
-          裁剪
-          <span id="loading-btn-text" class="hidden">
-            {' '}
-            Loading...
-          </span>
-        </button>
-
-        <div class="mt-5 flex flex-wrap" id="previewBox"></div>
-      </div> */}
     </>
   );
 }
