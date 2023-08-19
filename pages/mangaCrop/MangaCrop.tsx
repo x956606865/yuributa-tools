@@ -38,8 +38,7 @@ import { useEffect, useState } from 'react';
 import {
   base64ToImageUrl,
   calcSample,
-  checkPaddingDouble,
-  checkPaddingSingle,
+  checkImgInfo,
   getRandomSamples,
   loadImage,
   saveCBZ,
@@ -48,9 +47,9 @@ import {
 
 async function checkPadding(type: string, img: any, { loggerHandler, form }: any) {
   if (type === 'single') {
-    return checkPaddingSingle(img, { loggerHandler, form });
+    return checkImgInfo(img, { loggerHandler, form, isCheckMiddle: false });
   }
-  return checkPaddingDouble(img, { loggerHandler, form });
+  return checkImgInfo(img, { loggerHandler, form, isCheckMiddle: true });
 }
 
 async function splitMangaList(imgList: any, targetImgSize: any, { loggerHandler, form, paddingResult, coverName }: any) {
@@ -65,15 +64,16 @@ async function splitMangaList(imgList: any, targetImgSize: any, { loggerHandler,
     let leftPadding;
     let rightPadding;
     let middleWidth;
+    let baseColor;
     if (form.values.paddingCheckMethod === 'sample' || !form.values.isProcessPadding || !form.values.autoDetectPaddingWidth) {
-      ({ leftPadding, rightPadding, middleWidth } = paddingResult);
+      ({ leftPadding, rightPadding, middleWidth, baseColor } = paddingResult);
     } else {
-      ({ leftPadding, rightPadding, middleWidth } = await checkPadding('double', img, {
+      ({ leftPadding, rightPadding, middleWidth, baseColor } = await checkPadding('double', img, {
         form,
         loggerHandler,
       }));
     }
-    loggerHandler.append(`使用的padding为：${leftPadding},${rightPadding},${middleWidth}`);
+    loggerHandler.append(`使用的padding为：${leftPadding},${rightPadding},${middleWidth},${baseColor}`);
 
     // Load the image into an Image object
     const imgObj: any = await loadImage(img);
@@ -90,17 +90,17 @@ async function splitMangaList(imgList: any, targetImgSize: any, { loggerHandler,
     rightCanvas.width = targetImgSize.width;
     rightCanvas.height = targetImgSize.height;
     // 设置默认背景色
-    leftCtx.fillStyle = '#fff';
+    leftCtx.fillStyle = `rgb(${baseColor.join(',')})`;
 
     // 填充整个 Canvas
     leftCtx.fillRect(0, 0, leftCanvas.width, leftCanvas.height);
     // 设置默认背景色
-    rightCtx.fillStyle = '#fff';
+    rightCtx.fillStyle = `rgb(${baseColor.join(',')})`;
 
     // 填充整个 Canvas
     rightCtx.fillRect(0, 0, rightCanvas.width, rightCanvas.height);
     if (imgWidth > targetImgSize.width || imgObj.height > targetImgSize.height) {
-      console.log('bigger');
+      // console.log('bigger');
       const canvas = document.createElement('canvas');
       const ctx: any = canvas.getContext('2d');
       // 确定缩放比例
@@ -160,7 +160,7 @@ async function splitMangaList(imgList: any, targetImgSize: any, { loggerHandler,
         scaledHeight
       );
     } else {
-      console.log('smaller');
+      // console.log('smaller');
       // 确定缩放比例
       const scale = Math.min(targetImgSize.width / imgWidth, targetImgSize.height / imgObj.height);
 
@@ -217,10 +217,11 @@ async function resizeMangaList(imgList: any, targetImgSize: any, { loggerHandler
     }
     let leftPadding;
     let rightPadding;
+    let baseColor;
     if (form.values.paddingCheckMethod === 'sample') {
-      ({ leftPadding, rightPadding } = paddingResult);
+      ({ leftPadding, rightPadding, baseColor } = paddingResult);
     } else {
-      ({ leftPadding, rightPadding } = await checkPadding('single', img, {
+      ({ leftPadding, rightPadding, baseColor } = await checkPadding('single', img, {
         form,
         loggerHandler,
       }));
@@ -238,13 +239,13 @@ async function resizeMangaList(imgList: any, targetImgSize: any, { loggerHandler
     leftCanvas.width = targetImgSize.width;
     leftCanvas.height = targetImgSize.height;
     // 设置默认背景色
-    leftCtx.fillStyle = '#fff';
+    leftCtx.fillStyle = `rgb(${baseColor.join(',')})`;
 
     // 填充整个 Canvas
     leftCtx.fillRect(0, 0, leftCanvas.width, leftCanvas.height);
 
     if (imgWidth > targetImgSize.width || imgObj.height > targetImgSize.height) {
-      console.log('bigger');
+      // console.log('bigger');
       const canvas = document.createElement('canvas');
       const ctx: any = canvas.getContext('2d');
       // 确定缩放比例
@@ -282,7 +283,7 @@ async function resizeMangaList(imgList: any, targetImgSize: any, { loggerHandler
         scaledHeight
       );
     } else {
-      console.log('smaller');
+      // console.log('smaller');
       // 确定缩放比例
       const scale = Math.min(targetImgSize.width / imgWidth, targetImgSize.height / imgObj.height);
 
@@ -361,6 +362,7 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
     paddingResult.leftPadding = form.values.customLeftPadding;
     paddingResult.rightPadding = form.values.customRightPadding;
     paddingResult.middleWidth = form.values.customMiddlePadding;
+    paddingResult.baseColor = '#fff';
   } else if (checkMethod === 'sample') {
     const sampleIndex = getRandomSamples(imgList);
 
@@ -373,13 +375,14 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
     for (const i of sampleIndex) {
       const img = imgList[i];
       // eslint-disable-next-line no-await-in-loop
-      const { leftPadding, rightPadding, middleWidth } = await checkPadding('double', img, {
+      const { leftPadding, rightPadding, middleWidth, baseColor } = await checkPadding(form.values.extraProcess === 'split' ? 'double' : 'split', img, {
         loggerHandler,
         form,
       });
       r.leftPadding.push(leftPadding);
       r.rightPadding.push(rightPadding);
       r.middleWidth.push(middleWidth);
+      paddingResult.baseColor = baseColor;
     }
     if (sampleIndex.length > 3) {
       paddingResult.leftPadding = calcSample(r.leftPadding);
@@ -391,6 +394,7 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
       paddingResult.middleWidth = r.middleWidth[0];
     }
   }
+
   if (form.values.extraProcess === 'resize') {
     return resizeMangaList(imgList, targetImgSize, { loggerHandler, form, paddingResult, coverName });
   } if (form.values.extraProcess === 'split') {
@@ -472,8 +476,8 @@ export default function HomePage() {
   const [previewList, setPreviewList] = useState<any>([]);
   const [globalLoading, setGlobalLoading] = useState<boolean>(false);
   const [ImageViewModalOpened, ImageViewModal] = useDisclosure(false);
-  const [previewImage, setPreviewImage] = useState<any>(null)
-  const [isLoadingPreviewImage, setIsLoadingPreviewImage] = useState(false)
+  const [previewImage, setPreviewImage] = useState<any>(null);
+  const [isLoadingPreviewImage, setIsLoadingPreviewImage] = useState(false);
   const form = useForm({
     initialValues: {
       imgType: 'image/jpeg',
@@ -492,13 +496,20 @@ export default function HomePage() {
       customFileName: false,
       paddingColor: 'white',
       middlePaddingColor: 'white',
-      whiteThreshold: 240,
-      blackThreshold: 60,
+      whiteThreshold: 200,
+      blackThreshold: 90,
       paddingCheckMethod: 'sample',
       outputType: 'epub',
       fileName: 'images',
       name: 'unknown',
       author: 'unknown',
+      allowNoise: 1,
+      positionFix: {
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+      },
     },
   });
   const doProcess = async () => {
@@ -558,7 +569,7 @@ export default function HomePage() {
         return {
           imageUrl,
           key: r.name,
-          file: r.file
+          file: r.file,
         };
       })
     );
@@ -594,8 +605,8 @@ export default function HomePage() {
         size={700}
         opened={ImageViewModalOpened}
         onClose={() => {
-          ImageViewModal.close()
-          setPreviewImage(null)
+          ImageViewModal.close();
+          setPreviewImage(null);
         }}
         withCloseButton={false}
       // title="图片预览"
@@ -611,9 +622,9 @@ export default function HomePage() {
                   src={previewImage.imageUrl}
                   imageProps={{
                     onLoad: () => {
-                      URL.revokeObjectURL(previewImage.imageUrl)
-                      setIsLoadingPreviewImage(false)
-                    }
+                      URL.revokeObjectURL(previewImage.imageUrl);
+                      setIsLoadingPreviewImage(false);
+                    },
                   }}
                 />
               )
@@ -621,8 +632,6 @@ export default function HomePage() {
           </Center>
 
         </ScrollArea>
-
-
 
       </Modal>
       <Box pos="relative">
@@ -681,7 +690,7 @@ export default function HomePage() {
             <Dropzone
               mt={20}
               onDrop={(files) => {
-                console.log('accepted files', files);
+                // console.log('accepted files', files);
                 const uniqueList = sortBy(uniqBy([...fileList, ...files], 'name'), f => f.name);
                 if (!coverImg) {
                   // 尝试嗅探封面
@@ -940,6 +949,26 @@ export default function HomePage() {
                           name="blackThreshold"
                           {...form.getInputProps('blackThreshold')}
                         />
+                        <Group mt={20}>
+                          <NumberInput min={0} label="左侧宽度修复" {...form.getInputProps('positionFix.left')} />
+                          <NumberInput min={0} label="右侧宽度修复" {...form.getInputProps('positionFix.right')} />
+                          <NumberInput min={0} label="上侧宽度修复" {...form.getInputProps('positionFix.top')} />
+                          <NumberInput min={0} label="下侧宽度修复" {...form.getInputProps('positionFix.bottom')} />
+
+                        </Group>
+                        <Title mt={20} order={6}>
+                          噪点容纳度
+                        </Title>
+                        <Slider
+                          labelAlwaysOn
+                          mt={10}
+                          label={form.values.allowNoise.toFixed(2)}
+                          min={0}
+                          max={1}
+                          step={0.01}
+                          name="allowNoise"
+                          {...form.getInputProps('allowNoise')}
+                        />
                       </Box>)
                   }
 
@@ -996,15 +1025,15 @@ export default function HomePage() {
                           <AspectRatio key={index} ratio={preset.width / preset.height} w={200}>
                             <MImage
                               style={{
-                                cursor: 'zoom-in'
+                                cursor: 'zoom-in',
                               }}
                               onClick={async () => {
-                                setIsLoadingPreviewImage(true)
+                                setIsLoadingPreviewImage(true);
                                 const imageUrl = await base64ToImageUrl(item.file);
                                 setPreviewImage({
                                   imageUrl,
-                                })
-                                ImageViewModal.open()
+                                });
+                                ImageViewModal.open();
                               }}
                               width={200}
                               height="100%"
