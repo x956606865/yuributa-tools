@@ -206,13 +206,6 @@ export async function checkPaddingDouble(img: any, { loggerHandler, form }: any)
         // 找到第一个非空列
         if (!isEmptyColumn) {
           const rightX = i;
-          console.log(
-            '%c [ rightX ]-634',
-            'font-size:13px; background:pink; color:#bf2c9f;',
-            rightX
-          );
-          console.log('%c [ leftX ]-636', 'font-size:13px; background:pink; color:#bf2c9f;', leftX);
-
           const paddingWidth = rightX - leftX;
           if (paddingWidth < minPaddingWidth) {
             minPaddingWidth = paddingWidth;
@@ -413,18 +406,11 @@ export function readFile(file: any) {
     reader.readAsArrayBuffer(file);
   });
 }
-export const base64ToBlob = (base64Data: any) => {
-  console.log(
-    '%c [ base64Data ]-52',
-    'font-size:13px; background:pink; color:#bf2c9f;',
-    base64Data
-  );
-  return fetch(base64Data)
-    .then((response) => response.blob())
-    .catch((error) => {
-      console.error('Failed to convert Base64 to Image URL:', error);
-    });
-};
+export const base64ToBlob = (base64Data: any) => fetch(base64Data)
+  .then((response) => response.blob())
+  .catch((error) => {
+    console.error('Failed to convert Base64 to Image URL:', error);
+  });
 
 export async function saveCBZ(resultImgs: any, cover: any) {
   const zip = new JSZip();
@@ -461,7 +447,6 @@ export async function saveEpub(form: any, resultImgs: any, cover: any) {
   });
   if (cover) {
     const file = await base64ToBlob(cover);
-    console.log('%c [ file ]-93', 'font-size:13px; background:pink; color:#bf2c9f;', file);
     jepub.cover(file);
   }
   for (const img of resultImgs) {

@@ -357,9 +357,9 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
     paddingResult.rightPadding = 0;
     paddingResult.middleWidth = 0;
   } else if (!form.values.autoDetectPaddingWidth) {
-    paddingResult.leftPadding = form.values.custumLeftPadding;
-    paddingResult.rightPadding = form.values.custumRightPadding;
-    paddingResult.middleWidth = form.values.custumMiddlePadding;
+    paddingResult.leftPadding = form.values.customLeftPadding;
+    paddingResult.rightPadding = form.values.customRightPadding;
+    paddingResult.middleWidth = form.values.customMiddlePadding;
   } else if (checkMethod === 'sample') {
     const sampleIndex = getRandomSamples(imgList);
 
@@ -432,6 +432,13 @@ async function processCover(img: any, { form,
     name: img.name,
   };
 }
+
+function getFileName({ form }: any) {
+  if (form.values.customFileName) {
+    return `${form.values.fileName}.${form.values.outputType}`;
+  }
+  return `${form.values.name}${form.values.author.length === 0 ? '' : `[${form.values.author}]`}${form.values.volume === 0 ? '' : `[${form.values.volume < 10 ? `0${form.values.volume}` : form.values.volume}]`}`;
+}
 const SizePreset: any = {
   leaf2: {
     width: 1264,
@@ -473,11 +480,13 @@ export default function HomePage() {
       autoDetectPaddingColor: true,
       autoDetectPaddingWidth: true,
       isProcessPadding: true,
-      custumDeviceWidth: 0,
-      custumDeviceHeight: 0,
-      custumLeftPadding: 0,
-      custumRightPadding: 0,
-      custumMiddlePadding: 0,
+      customDeviceWidth: 0,
+      customDeviceHeight: 0,
+      customLeftPadding: 0,
+      customRightPadding: 0,
+      customMiddlePadding: 0,
+      volume: 0,
+      customFileName: false,
       paddingColor: 'white',
       middlePaddingColor: 'white',
       whiteThreshold: 240,
@@ -499,8 +508,8 @@ export default function HomePage() {
     let deviceSize = SizePreset[form.values.targetDevice ?? 'default'];
     if (form.values.targetDevice === 'custom') {
       deviceSize = {
-        width: form.values.custumDeviceWidth,
-        height: form.values.custumDeviceHeight,
+        width: form.values.customDeviceWidth,
+        height: form.values.customDeviceHeight,
       };
     }
     const processedList = await processImages2(
@@ -564,6 +573,13 @@ export default function HomePage() {
     //     })
     //   }))
     // }
+    const newFileName = getFileName({ form });
+    if (form.values.fileName !== newFileName && !form.values.customFileName) {
+      form.setValues({
+        ...form.values,
+        fileName: newFileName,
+      });
+    }
     loggerHandler.setState([]);
     setPreviewList([]);
   }, [form.values]);
@@ -605,10 +621,24 @@ export default function HomePage() {
             {
               form.values.targetDevice === 'custom' && (
                 <Group mt={20}>
-                  <NumberInput label="自定义宽度" {...form.getInputProps('custumDeviceWidth')} />
-                  <NumberInput label="自定义高度" {...form.getInputProps('custumDeviceHeigth')} />
+                  <NumberInput min={0} label="自定义宽度" {...form.getInputProps('customDeviceWidth')} />
+                  <NumberInput min={0} label="自定义高度" {...form.getInputProps('customDeviceHeight')} />
                 </Group>)
             }
+            <TextInput mt={20} label="作品名称" {...form.getInputProps('name')} />
+            <Group mt={20} align="flex-end" grow>
+              <TextInput disabled={!form.values.customFileName} label="文件名称" {...form.getInputProps('fileName')} />
+              <Switch
+                label="自定义文件名"
+                name="customFileName"
+                {...form.getInputProps('customFileName', { type: 'checkbox' })}
+              />
+            </Group>
+            <NumberInput min={0} mt={20} label="第x卷 (无卷数漫画设为0)" {...form.getInputProps('volume')} />
+
+            {form.values.outputType === 'epub' && (
+              <TextInput mt={20} label="作者" {...form.getInputProps('author')} />
+            )}
             <Dropzone
               mt={20}
               onDrop={(files) => {
@@ -720,10 +750,10 @@ export default function HomePage() {
 
                             </Group>
                             <Group>
-                              <Text fw={700}>保存为:</Text><Text color="green"> {`${form.values.fileName}.${form.values.outputType}`}</Text>
+                              <Text fw={700}>保存为:</Text><Text color="green"> {`${getFileName({ form })}.${form.values.outputType}`}</Text>
                             </Group>
                             <Group>
-                              <Text fw={700}>输出分辨率:</Text><Text color="green"> {`${form.values.targetDevice === 'custom' ? form.values.custumDeviceWidth : SizePreset[form.values.targetDevice].width}x${form.values.targetDevice === 'custom' ? form.values.custumDeviceHeight : SizePreset[form.values.targetDevice].height}`}</Text>
+                              <Text fw={700}>输出分辨率:</Text><Text color="green"> {`${form.values.targetDevice === 'custom' ? form.values.customDeviceWidth : SizePreset[form.values.targetDevice].width}x${form.values.targetDevice === 'custom' ? form.values.customDeviceHeight : SizePreset[form.values.targetDevice].height}`}</Text>
                             </Group>
                             <Group>
                               <Text fw={700}>额外处理:</Text><Text color="green"> {ProcessType[form.values.extraProcess]}</Text>
@@ -829,9 +859,9 @@ export default function HomePage() {
                         {
                           !form.values.autoDetectPaddingWidth && (
                             <Group mt={20}>
-                              <NumberInput label="自定义左侧padding宽度" {...form.getInputProps('custumLeftPadding')} />
-                              <NumberInput label="自定义右侧padding宽度" {...form.getInputProps('custumRightPadding')} />
-                              <NumberInput label="自定义中间padding宽度" {...form.getInputProps('custumMiddlePadding')} />
+                              <NumberInput min={0} label="自定义左侧padding宽度" {...form.getInputProps('customLeftPadding')} />
+                              <NumberInput min={0} label="自定义右侧padding宽度" {...form.getInputProps('customRightPadding')} />
+                              <NumberInput min={0} label="自定义中间padding宽度" {...form.getInputProps('customMiddlePadding')} />
                             </Group>)
                         }
                         <Radio.Group
@@ -893,13 +923,7 @@ export default function HomePage() {
                       ]}
                       {...form.getInputProps('outputType')}
                     />
-                    <TextInput mt={20} label="文件名称" {...form.getInputProps('fileName')} />
-                    {form.values.outputType === 'epub' && (
-                      <TextInput mt={20} label="作品名称" {...form.getInputProps('name')} />
-                    )}
-                    {form.values.outputType === 'epub' && (
-                      <TextInput mt={20} label="作者" {...form.getInputProps('author')} />
-                    )}
+
                   </Box>
                 </Accordion.Panel>
               </Accordion.Item>
