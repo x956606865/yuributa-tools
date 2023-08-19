@@ -27,10 +27,11 @@ import {
   NumberInput,
   Grid,
   Stack,
+  Modal,
 } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import { useForm } from '@mantine/form';
-import { useListState } from '@mantine/hooks';
+import { useDisclosure, useListState } from '@mantine/hooks';
 import { IconPhoto, IconUpload, IconX } from '@tabler/icons';
 import { sortBy, uniqBy } from 'lodash';
 import { useEffect, useState } from 'react';
@@ -470,7 +471,9 @@ export default function HomePage() {
   const [coverImg, setCoverImg] = useState<any>(null);
   const [previewList, setPreviewList] = useState<any>([]);
   const [globalLoading, setGlobalLoading] = useState<boolean>(false);
-
+  const [ImageViewModalOpened, ImageViewModal] = useDisclosure(false);
+  const [previewImage, setPreviewImage] = useState<any>(null)
+  const [isLoadingPreviewImage, setIsLoadingPreviewImage] = useState(false)
   const form = useForm({
     initialValues: {
       imgType: 'image/jpeg',
@@ -555,6 +558,7 @@ export default function HomePage() {
         return {
           imageUrl,
           key: r.name,
+          file: r.file
         };
       })
     );
@@ -586,6 +590,41 @@ export default function HomePage() {
 
   return (
     <>
+      <Modal
+        size={700}
+        opened={ImageViewModalOpened}
+        onClose={() => {
+          ImageViewModal.close()
+          setPreviewImage(null)
+        }}
+        withCloseButton={false}
+      // title="图片预览"
+      >
+        <LoadingOverlay visible={isLoadingPreviewImage} />
+        <ScrollArea h={1000}>
+          <Center>
+            {
+              previewImage && (
+                <MImage
+                  width={600}
+                  height="100%"
+                  src={previewImage.imageUrl}
+                  imageProps={{
+                    onLoad: () => {
+                      URL.revokeObjectURL(previewImage.imageUrl)
+                      setIsLoadingPreviewImage(false)
+                    }
+                  }}
+                />
+              )
+            }
+          </Center>
+
+        </ScrollArea>
+
+
+
+      </Modal>
       <Box pos="relative">
         <Center>
           <Container w="80%">
@@ -950,12 +989,23 @@ export default function HomePage() {
                       breakpoints={[{ maxWidth: 'sm', cols: 1 }]}
                       mt={previewList.length > 0 ? 'xl' : 0}
                     >
-                      {previewList.map((item: any) => {
+                      {previewList.map((item: any, index: number) => {
                         const preset = SizePreset[form.values.targetDevice];
 
                         return (
-                          <AspectRatio key={item.key} ratio={preset.width / preset.height} w={200}>
+                          <AspectRatio key={index} ratio={preset.width / preset.height} w={200}>
                             <MImage
+                              style={{
+                                cursor: 'zoom-in'
+                              }}
+                              onClick={async () => {
+                                setIsLoadingPreviewImage(true)
+                                const imageUrl = await base64ToImageUrl(item.file);
+                                setPreviewImage({
+                                  imageUrl,
+                                })
+                                ImageViewModal.open()
+                              }}
                               width={200}
                               height="100%"
                               src={item.imageUrl}
