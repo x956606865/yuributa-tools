@@ -441,7 +441,7 @@ export async function saveEpub(form: any, resultImgs: any, cover: any) {
   const jepub = new JEpub();
   jepub.init({
     i18n: 'en', // Internationalization
-    title: form.values.name,
+    title: form.values.fileName,
     author: form.values.author,
     publisher: '',
   });
