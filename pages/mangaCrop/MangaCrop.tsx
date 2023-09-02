@@ -34,6 +34,7 @@ import { useForm } from '@mantine/form';
 import { useDisclosure, useListState } from '@mantine/hooks';
 import { IconPhoto, IconUpload, IconX } from '@tabler/icons';
 import { sortBy, uniqBy } from 'lodash';
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import {
   base64ToImageUrl,
@@ -503,7 +504,7 @@ export default function HomePage() {
       fileName: 'images',
       name: 'unknown',
       author: 'unknown',
-      allowNoise: 1,
+      allowNoise: 0.9,
       positionFix: {
         top: 0,
         left: 0,
@@ -956,21 +957,23 @@ export default function HomePage() {
                           <NumberInput min={0} label="下侧宽度修复" {...form.getInputProps('positionFix.bottom')} />
 
                         </Group>
-                        <Title mt={20} order={6}>
-                          噪点容纳度
-                        </Title>
-                        <Slider
-                          labelAlwaysOn
-                          mt={10}
-                          label={form.values.allowNoise.toFixed(2)}
-                          min={0}
-                          max={1}
-                          step={0.01}
-                          name="allowNoise"
-                          {...form.getInputProps('allowNoise')}
-                        />
+
                       </Box>)
+
                   }
+                  <Title mt={20} order={6}>
+                    噪点容纳度
+                  </Title>
+                  <Slider
+                    labelAlwaysOn
+                    mt={10}
+                    label={form.values.allowNoise.toFixed(2)}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    name="allowNoise"
+                    {...form.getInputProps('allowNoise')}
+                  />
 
                 </Accordion.Panel>
               </Accordion.Item>

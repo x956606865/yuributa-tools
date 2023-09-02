@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:wasm": "cd local-wasm-tool && ls && wasm-pack build --target web --out-dir ../wasm-pkg",
+    "link:wasm": "cd ./wasm-pkg && yarn link && cd - && yarn link local-wasm-tool",
     "patch-package": "patch-package",
     "analyze": "ANALYZE=true next build",
     "start": "next start",

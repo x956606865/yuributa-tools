@@ -20,7 +20,7 @@ module.exports = withBundleAnalyzer({
       test: /\.xml$/,
       use: ['raw-loader'],
     });
-
+    config.experiments = { asyncWebAssembly: true };
     return config;
   },
 });
