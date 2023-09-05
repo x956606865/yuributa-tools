@@ -102,7 +102,7 @@ export function findMostFrequentRGB(pixels: number[]) {
 
   const entries = Object.entries(frequencyMap);
   const [mostFrequentRGB, maxFrequency] = entries.reduce(
-    (prev, curr) => {
+    (prev: any, curr: any) => {
       if (curr[1] > prev[1]) {
         return curr;
       }
@@ -170,7 +170,7 @@ function checkWhiteBlack(
   }
   return 'other';
 }
-function isWhite(r, g, b, whiteThreshold) {
+function isWhite(r: any, g: any, b: any, whiteThreshold: any) {
   return r >= whiteThreshold && g >= whiteThreshold && b >= whiteThreshold;
 }
 function getRGBByXY(x: number, y: number, pixels: number[], { height, width }: any) {
@@ -182,7 +182,11 @@ function getRGBByXY(x: number, y: number, pixels: number[], { height, width }: a
     a: pixels[index + 3],
   };
 }
-function checkPointBlackWhite(x, y, { pixels, whiteThreshold, blackThreshold, height, width }) {
+function checkPointBlackWhite(
+  x: any,
+  y: any,
+  { pixels, whiteThreshold, blackThreshold, height, width }: any
+) {
   const { r, g, b } = getRGBByXY(x, y, pixels, { height, width });
   if (r >= whiteThreshold && g >= whiteThreshold && b >= whiteThreshold) {
     return 'white';
