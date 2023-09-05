@@ -34,8 +34,10 @@
     "@mantine/notifications": "6.0.2",
     "@mantine/prism": "6.0.2",
     "@next/bundle-analyzer": "^13.1.6",
+    "@notionhq/client": "^2.2.13",
     "@tabler/icons": "^1.107.0",
     "@tabler/icons-react": "^2.4.0",
+    "ahooks": "^3.7.8",
     "cookies-next": "^2.1.1",
     "dayjs": "^1.11.6",
     "ejs": "^3.1.9",
@@ -45,12 +47,14 @@
     "jszip": "^3.10.1",
     "libarchive-wasm": "^1.1.0",
     "lodash": "^4.17.21",
+    "moment": "^2.29.4",
     "next": "13.2.4",
     "patch-package": "^8.0.0",
     "raw-loader": "^4.0.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "terser-webpack-plugin": "^5.3.9"
+    "terser-webpack-plugin": "^5.3.9",
+    "zustand": "^4.4.1"
   },
   "devDependencies": {
     "@babel/core": "^7.17.8",

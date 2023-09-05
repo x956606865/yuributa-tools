@@ -1,8 +1,5 @@
-/* eslint-disable global-require */
-/* eslint-disable @typescript-eslint/no-shadow */
-/* eslint-disable no-plusplus */
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
+/* eslint-disable */
+
 import JSZip from 'jszip';
 import JEpub from './jepub/jepub';
 // import * as wasm from 'local-wasm-tool'
@@ -45,18 +42,18 @@ export function loadImage(file: any) {
 export function fuzzRgb(n: number) {
   // return n
   // stop fuzz
-  if (n < 0) return 0
-  if (n > 255) return 255
-  if (n < 10) return 10
+  if (n < 0) return 0;
+  if (n > 255) return 255;
+  if (n < 10) return 10;
   // if (n < 100) {
   //   return Math.round(n / 10) * 10
   // }
-  return Math.round(n / 10) * 10
+  return Math.round(n / 10) * 10;
 }
 
 function genRGBTable(pixels: number[]) {
-  const pLength = pixels.length
-  const frequencyMap: { [key: string]: number } = {}
+  const pLength = pixels.length;
+  const frequencyMap: { [key: string]: number } = {};
   for (let i = 0; i < pLength; i += 4) {
     const r = pixels[i];
     const g = pixels[i + 1];
@@ -67,13 +64,12 @@ function genRGBTable(pixels: number[]) {
     }
     frequencyMap[rgb]++;
   }
-  return frequencyMap
+  return frequencyMap;
 }
 export function findMostFrequentRGB(pixels: number[]) {
   // const frequencyMap: any = {};
 
-
-  const pLength = pixels.length
+  const pLength = pixels.length;
   const frequencyMap = Object.create(null); // 使用原型为null的空对象，避免原型链查找的开销
 
   // 统计每个 RGB 值的频率
@@ -93,7 +89,6 @@ export function findMostFrequentRGB(pixels: number[]) {
     frequencyMap[rgb]++;
   }
 
-
   // // 找到频率最高的 RGB 值
   // let maxFrequency = 0;
   // let mostFrequentRGB = '';
@@ -105,27 +100,26 @@ export function findMostFrequentRGB(pixels: number[]) {
   //   }
   // }
 
-
   const entries = Object.entries(frequencyMap);
-  const [mostFrequentRGB, maxFrequency] = entries.reduce((prev, curr) => {
-    if (curr[1] > prev[1]) {
-      return curr;
-    }
-    return prev;
-  }, ['', 0]);
-
+  const [mostFrequentRGB, maxFrequency] = entries.reduce(
+    (prev, curr) => {
+      if (curr[1] > prev[1]) {
+        return curr;
+      }
+      return prev;
+    },
+    ['', 0]
+  );
 
   // console.log('%c [ frequencyMap ]-30', 'font-size:13px; background:pink; color:#bf2c9f;', frequencyMap)
 
-
   return {
     rgb: mostFrequentRGB.split(',').map(Number),
-    frequency: (maxFrequency / (pixels.length / 4)),
-    frequencyMap
+    frequency: maxFrequency / (pixels.length / 4),
+    frequencyMap,
   };
 }
 function getCol(x: number, pixels: number[], { height, width }: any) {
-
   const col = [];
   for (let y = 0; y < height; y++) {
     // 获取当前像素的颜色数据
@@ -136,51 +130,48 @@ function getCol(x: number, pixels: number[], { height, width }: any) {
     col.push(pixels[index + 3]);
   }
 
-
   return col;
 }
 function getRow(y: number, pixels: number[], { height, width }: any) {
-  return pixels.slice(y * width * 4, width * 4)
+  return pixels.slice(y * width * 4, width * 4);
 }
 export function getColColor(col: number[]) {
   return findMostFrequentRGB(col).rgb;
 }
-function checkWhiteBlack(col: number[], { whiteThreshold, blackThreshold, atLeastFrequency = 1, colNumber = 0 }: any) {
+function checkWhiteBlack(
+  col: number[],
+  { whiteThreshold, blackThreshold, atLeastFrequency = 1, colNumber = 0 }: any
+) {
   const { frequencyMap } = findMostFrequentRGB(col);
   const newFrequencyMap: any = {
     white: 0,
     black: 0,
-    other: 0
-  }
-  Object.keys(frequencyMap).forEach(key => {
-    const [r, g, b] = key.split(',').map(Number)
-    if (r >= whiteThreshold &&
-      g >= whiteThreshold &&
-      b >= whiteThreshold
-    ) {
-      newFrequencyMap.white += frequencyMap[key]
-    } else if (r <= blackThreshold &&
-      g <= blackThreshold &&
-      b <= blackThreshold) {
-      newFrequencyMap.black += frequencyMap[key]
+    other: 0,
+  };
+  Object.keys(frequencyMap).forEach((key) => {
+    const [r, g, b] = key.split(',').map(Number);
+    if (r >= whiteThreshold && g >= whiteThreshold && b >= whiteThreshold) {
+      newFrequencyMap.white += frequencyMap[key];
+    } else if (r <= blackThreshold && g <= blackThreshold && b <= blackThreshold) {
+      newFrequencyMap.black += frequencyMap[key];
     } else {
-      newFrequencyMap.other += frequencyMap[key]
+      newFrequencyMap.other += frequencyMap[key];
     }
-  })
-  const whiteFrequency = newFrequencyMap.white / (
-    newFrequencyMap.black + newFrequencyMap.white + newFrequencyMap.other)
-  const blackFrequency = newFrequencyMap.black / (
-    newFrequencyMap.black + newFrequencyMap.white + newFrequencyMap.other);
+  });
+  const whiteFrequency =
+    newFrequencyMap.white / (newFrequencyMap.black + newFrequencyMap.white + newFrequencyMap.other);
+  const blackFrequency =
+    newFrequencyMap.black / (newFrequencyMap.black + newFrequencyMap.white + newFrequencyMap.other);
   if (whiteFrequency > atLeastFrequency) {
-    return 'white'
+    return 'white';
   }
   if (blackFrequency > atLeastFrequency) {
-    return 'black'
+    return 'black';
   }
-  return 'other'
+  return 'other';
 }
 function isWhite(r, g, b, whiteThreshold) {
-  return r >= whiteThreshold && g >= whiteThreshold && b >= whiteThreshold
+  return r >= whiteThreshold && g >= whiteThreshold && b >= whiteThreshold;
 }
 function getRGBByXY(x: number, y: number, pixels: number[], { height, width }: any) {
   const index = (x + y * width) * 4;
@@ -188,38 +179,35 @@ function getRGBByXY(x: number, y: number, pixels: number[], { height, width }: a
     r: pixels[index],
     g: pixels[index + 1],
     b: pixels[index + 2],
-    a: pixels[index + 3]
-  }
+    a: pixels[index + 3],
+  };
 }
 function checkPointBlackWhite(x, y, { pixels, whiteThreshold, blackThreshold, height, width }) {
-  const { r, g, b } = getRGBByXY(x, y, pixels, { height, width })
+  const { r, g, b } = getRGBByXY(x, y, pixels, { height, width });
   if (r >= whiteThreshold && g >= whiteThreshold && b >= whiteThreshold) {
-    return 'white'
+    return 'white';
   }
   if (r <= blackThreshold && g <= blackThreshold && b <= blackThreshold) {
-    return 'black'
+    return 'black';
   }
-  return 'other'
+  return 'other';
 }
 function isWhiteCol(col: number[], { whiteThreshold, atLeastFrequency = 1, colNumber = 0 }: any) {
   const { frequencyMap } = findMostFrequentRGB(col);
   const newFrequencyMap: any = {
     white: 0,
-    noneWhite: 0
-  }
-  Object.keys(frequencyMap).forEach(key => {
-    const [r, g, b] = key.split(',').map(Number)
-    if (r >= whiteThreshold &&
-      g >= whiteThreshold &&
-      b >= whiteThreshold
-    ) {
-      newFrequencyMap.white += frequencyMap[key]
+    noneWhite: 0,
+  };
+  Object.keys(frequencyMap).forEach((key) => {
+    const [r, g, b] = key.split(',').map(Number);
+    if (r >= whiteThreshold && g >= whiteThreshold && b >= whiteThreshold) {
+      newFrequencyMap.white += frequencyMap[key];
     } else {
-      newFrequencyMap.noneWhite += frequencyMap[key]
+      newFrequencyMap.noneWhite += frequencyMap[key];
     }
-  })
-  const newFrequency = newFrequencyMap.white / (newFrequencyMap.white + newFrequencyMap.noneWhite)
-  return newFrequency >= atLeastFrequency
+  });
+  const newFrequency = newFrequencyMap.white / (newFrequencyMap.white + newFrequencyMap.noneWhite);
+  return newFrequency >= atLeastFrequency;
   // const [r, g, b] = rgb;
   // if (r >= whiteThreshold &&
   //   g >= whiteThreshold &&
@@ -234,21 +222,18 @@ export function isBlackCol(col: number[], { blackThreshold, atLeastFrequency = 1
   const { frequencyMap } = findMostFrequentRGB(col);
   const newFrequencyMap: any = {
     black: 0,
-    noneBlack: 0
-  }
-  Object.keys(frequencyMap).forEach(key => {
-    const [r, g, b] = key.split(',').map(Number)
-    if (r <= blackThreshold &&
-      g <= blackThreshold &&
-      b <= blackThreshold
-    ) {
-      newFrequencyMap.black += frequencyMap[key]
+    noneBlack: 0,
+  };
+  Object.keys(frequencyMap).forEach((key) => {
+    const [r, g, b] = key.split(',').map(Number);
+    if (r <= blackThreshold && g <= blackThreshold && b <= blackThreshold) {
+      newFrequencyMap.black += frequencyMap[key];
     } else {
-      newFrequencyMap.noneBlack += frequencyMap[key]
+      newFrequencyMap.noneBlack += frequencyMap[key];
     }
-  })
-  const newFrequency = newFrequencyMap.black / (newFrequencyMap.black + newFrequencyMap.noneBlack)
-  return newFrequency >= atLeastFrequency
+  });
+  const newFrequency = newFrequencyMap.black / (newFrequencyMap.black + newFrequencyMap.noneBlack);
+  return newFrequency >= atLeastFrequency;
 }
 function getMaxPaddingWidthByRow(
   pixels: number[],
@@ -259,14 +244,20 @@ function getMaxPaddingWidthByRow(
   console.time('getMaxPaddingWidthByRow');
   for (let y = 0; y < height; y++) {
     console.time('getMaxLeftPaddingWidthByRow');
-    let leftRowBlankWidth = 0
+    let leftRowBlankWidth = 0;
     for (let x = 0; x < width / 2; x++) {
-      const pointColor = checkPointBlackWhite(x, y, { pixels, whiteThreshold, blackThreshold, height, width });
-      const isWhite = pointColor === 'white'
-      const isBlack = pointColor === 'black'
+      const pointColor = checkPointBlackWhite(x, y, {
+        pixels,
+        whiteThreshold,
+        blackThreshold,
+        height,
+        width,
+      });
+      const isWhite = pointColor === 'white';
+      const isBlack = pointColor === 'black';
 
       if (pointColor === 'other') {
-        break
+        break;
       }
       if (flag === 'white') {
         if (isWhite) {
@@ -282,19 +273,25 @@ function getMaxPaddingWidthByRow(
       }
     }
     if (leftRowBlankWidth < leftMaxBlankWidth) {
-      leftMaxBlankWidth = leftRowBlankWidth
+      leftMaxBlankWidth = leftRowBlankWidth;
     }
     console.timeEnd('getMaxLeftPaddingWidthByRow');
 
     console.time('getMaxRightPaddingWidthByRow');
-    let rightRowBlankWidth = 0
+    let rightRowBlankWidth = 0;
     for (let x = width - 1; x > width / 2; x--) {
-      const pointColor = checkPointBlackWhite(x, y, { pixels, whiteThreshold, blackThreshold, height, width });
-      const isWhite = pointColor === 'white'
-      const isBlack = pointColor === 'black'
+      const pointColor = checkPointBlackWhite(x, y, {
+        pixels,
+        whiteThreshold,
+        blackThreshold,
+        height,
+        width,
+      });
+      const isWhite = pointColor === 'white';
+      const isBlack = pointColor === 'black';
 
       if (pointColor === 'other') {
-        break
+        break;
       }
       if (flag === 'white') {
         if (isWhite) {
@@ -310,31 +307,29 @@ function getMaxPaddingWidthByRow(
       }
     }
     if (rightRowBlankWidth < rightMaxBlankWidth) {
-      rightMaxBlankWidth = rightRowBlankWidth
+      rightMaxBlankWidth = rightRowBlankWidth;
     }
     console.timeEnd('getMaxRightPaddingWidthByRow');
   }
   if (leftMaxBlankWidth === Infinity) {
-    leftMaxBlankWidth = 0
+    leftMaxBlankWidth = 0;
   }
   if (rightMaxBlankWidth === Infinity) {
-    rightMaxBlankWidth = 0
+    rightMaxBlankWidth = 0;
   }
   // console.log('%c [ flag ]-96', 'font-size:13px; background:pink; color:#bf2c9f;', flag)
-
 
   console.timeEnd('getMaxPaddingWidthByRow');
 
   return {
     leftMaxBlankWidth,
-    rightMaxBlankWidth
+    rightMaxBlankWidth,
   };
 }
 function getLeftMaxPaddingWidth(
   pixels: number[],
   { width, height, whiteThreshold, blackThreshold, flag, allowNoise }: any
 ) {
-
   console.time('getLeftMaxPaddingWidth');
 
   let blankWidth = 0;
@@ -343,10 +338,14 @@ function getLeftMaxPaddingWidth(
   for (let x = 0; x < width / 2; x++) {
     const col = getCol(x, pixels, { width, height });
     // console.log("at: " + x)
-    const colColor = checkWhiteBlack(col,
-      { whiteThreshold, blackThreshold, atLeastFrequency: allowNoise, colNumber: x })
-    const isWhite = colColor === 'white'
-    const isBlack = colColor === 'black'
+    const colColor = checkWhiteBlack(col, {
+      whiteThreshold,
+      blackThreshold,
+      atLeastFrequency: allowNoise,
+      colNumber: x,
+    });
+    const isWhite = colColor === 'white';
+    const isBlack = colColor === 'black';
     // console.log('%c [ colColor ]-237', 'font-size:13px; background:pink; color:#bf2c9f;', colColor)
 
     // // 判断像素是否接近白色
@@ -381,10 +380,14 @@ function getRightMaxPaddingWidth(
   let blankWidth = 0;
   for (let x = width - 1; x >= width / 2; x--) {
     const col = getCol(x, pixels, { width, height });
-    const colColor = checkWhiteBlack(col,
-      { whiteThreshold, blackThreshold, atLeastFrequency: allowNoise, colNumber: x })
-    const isWhite = colColor === 'white'
-    const isBlack = colColor === 'black'
+    const colColor = checkWhiteBlack(col, {
+      whiteThreshold,
+      blackThreshold,
+      atLeastFrequency: allowNoise,
+      colNumber: x,
+    });
+    const isWhite = colColor === 'white';
+    const isBlack = colColor === 'black';
 
     // // 判断像素是否接近白色
     // const isWhite = red >= whiteThreshold && green >= whiteThreshold && blue >= whiteThreshold;
@@ -416,19 +419,23 @@ function getMiddleMaxPaddingWidth(
   console.time('getMiddleMaxPaddingWidth');
 
   let minPaddingWidth = Infinity;
-  let leftX = 0
-  let rightX = 0
+  let leftX = 0;
+  let rightX = 0;
   console.time('checkLeftX');
 
   for (let x = Math.floor(width / 2); x >= 0; x--) {
     let isEmptyColumn = true;
     const col = getCol(x, pixels, { width, height });
-    const colColor = checkWhiteBlack(col,
-      { whiteThreshold, blackThreshold, atLeastFrequency: allowNoise, colNumber: x })
+    const colColor = checkWhiteBlack(col, {
+      whiteThreshold,
+      blackThreshold,
+      atLeastFrequency: allowNoise,
+      colNumber: x,
+    });
     // console.log('%c [ colColor ]-274', 'font-size:13px; background:pink; color:#bf2c9f;', colColor)
 
-    const isWhite = colColor === 'white'
-    const isBlack = colColor === 'black'
+    const isWhite = colColor === 'white';
+    const isBlack = colColor === 'black';
     if (colColor === 'other') {
       isEmptyColumn = false;
     } else if (flag === 'white' && isBlack) {
@@ -450,11 +457,14 @@ function getMiddleMaxPaddingWidth(
     for (let i = Math.floor(width / 2); i < width; i++) {
       let isEmptyColumn: any = true;
       const rightCol = getCol(i, pixels, { width, height });
-      const colColor = checkWhiteBlack(rightCol,
-        { whiteThreshold, blackThreshold, atLeastFrequency: allowNoise })
-      const isRightWhite = colColor === 'white'
+      const colColor = checkWhiteBlack(rightCol, {
+        whiteThreshold,
+        blackThreshold,
+        atLeastFrequency: allowNoise,
+      });
+      const isRightWhite = colColor === 'white';
       // console.log('%c [ colColor ]-274', 'font-size:13px; background:pink; color:#bf2c9f;', colColor)
-      const isRightBlack = colColor === 'black'
+      const isRightBlack = colColor === 'black';
       // const isRightWhite = isWhiteCol(rightCol, { whiteThreshold, atLeastFrequency: allowNoise });
       // const isRightBlack = isBlackCol(rightCol, { blackThreshold, atLeastFrequency: allowNoise });
 
@@ -474,13 +484,15 @@ function getMiddleMaxPaddingWidth(
       }
     }
     console.timeEnd('checkRightX');
-
   }
-
 
   if (leftX !== 0 && rightX !== 0) {
     const paddingWidth = rightX - leftX;
-    console.log('%c [ paddingWidth ]-298', 'font-size:13px; background:pink; color:#bf2c9f;', paddingWidth)
+    console.log(
+      '%c [ paddingWidth ]-298',
+      'font-size:13px; background:pink; color:#bf2c9f;',
+      paddingWidth
+    );
     if (paddingWidth < minPaddingWidth) {
       minPaddingWidth = paddingWidth;
     }
@@ -490,7 +502,6 @@ function getMiddleMaxPaddingWidth(
   return minPaddingWidth;
 }
 export async function checkImgInfo(img: any, { loggerHandler, form, isCheckMiddle = false }: any) {
-
   loggerHandler.append('开始检测padding...');
   console.time('up');
 
@@ -531,7 +542,7 @@ export async function checkImgInfo(img: any, { loggerHandler, form, isCheckMiddl
 
   // console.log('%c [ test ]-416', 'font-size:13px; background:pink; color:#bf2c9f;', test)
   // const baseColor: number[] = findMostFrequentRGB(pixels).rgb;
-  const baseColor: number[] = [255, 255, 255]   // test.split(',').map(Number);
+  const baseColor: number[] = [255, 255, 255]; // test.split(',').map(Number);
   // console.log('%c [ baseColor ]-404', 'font-size:13px; background:pink; color:#bf2c9f;', baseColor)
   // console.timeEnd('baseColor');
 
@@ -544,10 +555,10 @@ export async function checkImgInfo(img: any, { loggerHandler, form, isCheckMiddl
 
   if (form.values.autoDetectPaddingColor) {
     const leftFirstCol = getCol(0, pixels, { width: canvas.width, height: canvas.height });
-    const isLeftPaddingWhite = isWhiteCol(
-      leftFirstCol,
-      { whiteThreshold, atLeastFrequency: form.values.allowNoise }
-    );
+    const isLeftPaddingWhite = isWhiteCol(leftFirstCol, {
+      whiteThreshold,
+      atLeastFrequency: form.values.allowNoise,
+    });
     if (isLeftPaddingWhite) {
       flag = 'white';
     } else {
@@ -560,10 +571,10 @@ export async function checkImgInfo(img: any, { loggerHandler, form, isCheckMiddl
     // }
     const middleX = Math.floor(canvas.width / 2);
     const middleCol = getCol(middleX, pixels, { width: canvas.width, height: canvas.height });
-    const isMiddlePaddingWhite = isWhiteCol(
-      middleCol,
-      { whiteThreshold, atLeastFrequency: form.values.allowNoise }
-    );
+    const isMiddlePaddingWhite = isWhiteCol(middleCol, {
+      whiteThreshold,
+      atLeastFrequency: form.values.allowNoise,
+    });
     if (isMiddlePaddingWhite) {
       middleFlag = 'white';
     } else {
@@ -591,7 +602,13 @@ export async function checkImgInfo(img: any, { loggerHandler, form, isCheckMiddl
   // console.timeEnd('checkColor');
   // console.timeEnd('up');
   // console.time('down');
-  const { leftMaxBlankWidth, rightMaxBlankWidth } = getMaxPaddingWidthByRow(pixels, { width: canvas.width, height: canvas.height, whiteThreshold, blackThreshold, flag })
+  const { leftMaxBlankWidth, rightMaxBlankWidth } = getMaxPaddingWidthByRow(pixels, {
+    width: canvas.width,
+    height: canvas.height,
+    whiteThreshold,
+    blackThreshold,
+    flag,
+  });
   // // 定义最大的左侧留白宽度
   // const leftMaxBlankWidth = getLeftMaxPaddingWidth(
   //   pixels,
@@ -618,15 +635,14 @@ export async function checkImgInfo(img: any, { loggerHandler, form, isCheckMiddl
 
   let minPaddingWidth = Infinity;
   if (isCheckMiddle) {
-    minPaddingWidth = getMiddleMaxPaddingWidth(pixels,
-      {
-        width: canvas.width,
-        height: canvas.height,
-        whiteThreshold,
-        blackThreshold,
-        flag,
-        allowNoise: form.values.allowNoise,
-      });
+    minPaddingWidth = getMiddleMaxPaddingWidth(pixels, {
+      width: canvas.width,
+      height: canvas.height,
+      whiteThreshold,
+      blackThreshold,
+      flag,
+      allowNoise: form.values.allowNoise,
+    });
     // // 遍历图像像素数据，检测留白的宽度
     // for (let x = Math.floor(canvas.width / 2); x >= 0; x--) {
     //   let isEmptyColumn = true;
@@ -712,13 +728,13 @@ export async function checkImgInfo(img: any, { loggerHandler, form, isCheckMiddl
   console.log({
     leftPadding: leftMaxBlankWidth,
     rightPadding: rightMaxBlankWidth,
-    middleWidth: isCheckMiddle ? (minPaddingWidth === (Infinity) ? 0 : minPaddingWidth) : 0,
+    middleWidth: isCheckMiddle ? (minPaddingWidth === Infinity ? 0 : minPaddingWidth) : 0,
     baseColor,
-  })
+  });
   return {
     leftPadding: leftMaxBlankWidth,
     rightPadding: rightMaxBlankWidth,
-    middleWidth: isCheckMiddle ? (minPaddingWidth === (Infinity) ? 0 : minPaddingWidth) : 0,
+    middleWidth: isCheckMiddle ? (minPaddingWidth === Infinity ? 0 : minPaddingWidth) : 0,
     baseColor,
   };
 }
@@ -918,11 +934,12 @@ export function readFile(file: any) {
     reader.readAsArrayBuffer(file);
   });
 }
-export const base64ToBlob = (base64Data: any) => fetch(base64Data)
-  .then((response) => response.blob())
-  .catch((error) => {
-    console.error('Failed to convert Base64 to Image URL:', error);
-  });
+export const base64ToBlob = (base64Data: any) =>
+  fetch(base64Data)
+    .then((response) => response.blob())
+    .catch((error) => {
+      console.error('Failed to convert Base64 to Image URL:', error);
+    });
 
 export async function saveCBZ(resultImgs: any, cover: any) {
   const zip = new JSZip();

@@ -1,4 +1,5 @@
 import { AppShell, Group, Navbar, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
+import { IconAspectRatio } from '@tabler/icons';
 import { IconCrop } from '@tabler/icons-react';
 
 import { useRouter } from 'next/router';
@@ -48,12 +49,12 @@ const data = [
     label: '漫画打包',
     href: '/mangaCrop/MangaCrop',
   },
-  // {
-  //   icon: <IconAspectRatio size="1rem" />,
-  //   color: 'blue',
-  //   label: '漫画Resize',
-  //   href: '/mangaResize/MangaResize',
-  // },
+  {
+    icon: <IconAspectRatio size="1rem" />,
+    color: 'blue',
+    label: 'notion漫画',
+    href: '/notion',
+  },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {
