@@ -51,6 +51,8 @@ export default function SelectDBAndOperator({ form }: any) {
       >
         <Group mt="xs">
           <Radio value="fetchNew" label="采集最新百合作品" />
+          <Radio disabled value="search" label="搜索并添加漫画到notion(开发中)" />
+          <Radio disabled value="mergeDup" label="查询并合并notion中重复项(开发中)" />
           {/* <Radio value="publicAuth" label="跳转认证" /> */}
         </Group>
       </Radio.Group>

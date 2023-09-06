@@ -6,15 +6,17 @@ import { uniqBy } from 'lodash';
 import { useNotionStore } from '~/stores/notion.store';
 
 import CreatePreset from './CreatePreset';
+import { convertTypeToNotion } from '~/utils/client/utils';
 
 interface GenPresetProps {
   fields: any;
   presetName: string;
   selectedDBId: string;
   fetcher: any;
+  customFields: any;
 }
 
-const genPreset = ({ fields, presetName, selectedDBId, fetcher }: GenPresetProps) => {
+const genPreset = ({ fields, presetName, selectedDBId, fetcher, customFields }: GenPresetProps) => {
   // console.log(
   //   '%c [ fields,presetName ]-121',
   //   'font-size:13px; background:pink; color:#bf2c9f;',
@@ -24,6 +26,7 @@ const genPreset = ({ fields, presetName, selectedDBId, fetcher }: GenPresetProps
   const preset: any = {
     name: presetName,
     mapping: {},
+    customFields: {},
     fetcher,
     targetDbID: selectedDBId,
     id: `${presetName}-${selectedDBId}`,
@@ -44,6 +47,17 @@ const genPreset = ({ fields, presetName, selectedDBId, fetcher }: GenPresetProps
       notionName: JSONInfo.name,
       notionFieldId: JSONInfo.id,
     };
+  });
+  customFields.forEach((field: any) => {
+    let fromType = 'string';
+    if (Array.isArray(field.defaultValue)) {
+      fromType = 'arrayString';
+    } else if (typeof field.defaultValue === 'number') {
+      fromType = 'number';
+    }
+    const notionData = JSON.parse(field.notionFieldName);
+    const data = convertTypeToNotion(field.defaultValue, fromType, notionData.type);
+    preset.customFields[notionData.id] = data;
   });
   return preset;
 };
@@ -95,7 +109,7 @@ export default function PresetManage({ onFinished = () => {} }: any) {
       </Group>
       {isCreatingPreset && (
         <CreatePreset
-          onSave={({ fields, presetName, selectedDBId, fetcher }) => {
+          onSave={({ fields, presetName, selectedDBId, fetcher, customFields }) => {
             // console.log(
             //   '%c [ fields,presetName ]-121',
             //   'font-size:13px; background:pink; color:#bf2c9f;',
@@ -106,6 +120,7 @@ export default function PresetManage({ onFinished = () => {} }: any) {
               fields,
               presetName,
               selectedDBId,
+              customFields,
               fetcher,
             });
             console.log(preset);

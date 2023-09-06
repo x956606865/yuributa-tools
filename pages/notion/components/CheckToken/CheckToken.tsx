@@ -28,7 +28,7 @@ export default function CheckToken({ onTokenValid = () => {}, form }: any) {
       >
         <Group mt="xs">
           <Radio value="token" label="使用Token" />
-          <Radio value="publicAuth" label="跳转认证" />
+          <Radio disabled value="publicAuth" label="跳转认证(开发中)" />
         </Group>
       </Radio.Group>
       {form.values.authType === 'token' && (

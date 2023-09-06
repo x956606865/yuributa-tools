@@ -1,15 +1,64 @@
-import { Button, Group, Radio, Select, TextInput } from '@mantine/core';
+import { Button, Group, MultiSelect, NumberInput, Radio, Select, TextInput } from '@mantine/core';
 
 import { useForm } from '@mantine/form';
 import { randomId } from '@mantine/hooks';
-import { useEffect, useMemo } from 'react';
-import { isObject } from 'lodash';
+import { useEffect, useMemo, useState } from 'react';
+import { isObject, uniq } from 'lodash';
+import { DateInput } from '@mantine/dates';
 import { getFetcherMappingByName, getNotionDBTitle } from '~/utils/client/utils';
 import { useNotionStore } from '~/stores/notion.store';
 
 interface CreatePresetProps {
   onSave: (data: any) => void;
 }
+
+const currentSupportedNotionTypes = [
+  'select',
+  'date',
+  'multi_select',
+  'number',
+  'files',
+  'rich_text',
+  'title',
+  'url',
+  'cover',
+];
+const renderFormByNotionType = ({ notionData, formProps = {} }: any) => {
+  switch (notionData.type) {
+    // case 'checkbox':
+    //   return <MultiSelect data={selectList} label="请选择" {...formProps} />;
+    case 'select':
+      return (
+        <Select
+          label="请选择"
+          getCreateLabel={(query) => `+ 创建 ${query}`}
+          data={notionData.select.options.map((o: any) => o.name)}
+          {...formProps}
+        />
+      );
+    case 'date':
+      return <DateInput label="选择日期" {...formProps} />;
+    case 'multi_select':
+      return (
+        <MultiSelect
+          data={notionData.multi_select.options.map((o: any) => o.name)}
+          label="请选择"
+          {...formProps}
+        />
+      );
+    case 'number':
+      return <NumberInput defaultValue={0} label="输入值" {...formProps} />;
+    case 'files':
+    case 'rich_text':
+    case 'title':
+    case 'url':
+    case 'cover':
+      return <TextInput label="输入值" mt={20} {...formProps} />;
+
+    default:
+      return null;
+  }
+};
 
 export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
   // const selectedPreset = useNotionStore((store: any) => store.selectedPreset);
@@ -21,10 +70,13 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
   const setSelectedDBId = useNotionStore((store: any) => store.setSelectedDBId);
   const selectedDBId = useNotionStore((store: any) => store.selectedDBId);
   const token = useNotionStore((store: any) => store.token);
+  const [selectedNotionField, setSelectedNotionField] = useState([]);
+
   const form = useForm({
     initialValues: {
       presetName: '',
       fields: [],
+      customFields: [],
       fetcherName: 'bgmV1',
     },
   });
@@ -32,6 +84,24 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
     () => getFetcherMappingByName(form.values.fetcherName),
     [form.values.fetcherName]
   );
+  // console.log('%c [ form ]-74', 'font-size:13px; background:pink; color:#bf2c9f;', form.values);
+  useEffect(() => {
+    const newSelectedNotionField = [...selectedNotionField];
+    form.values.fields.forEach((f: any) => {
+      try {
+        const nd: any = JSON.parse(f.notionFieldName);
+
+        newSelectedNotionField.push(nd.name);
+      } catch (e) {}
+    });
+    form.values.customFields.forEach((f: any) => {
+      try {
+        const nd: any = JSON.parse(f.notionFieldName);
+        newSelectedNotionField.push(nd.name);
+      } catch (e) {}
+    });
+    setSelectedNotionField(uniq(newSelectedNotionField));
+  }, [form.values.fields, form.values.customFields]);
   useEffect(() => {
     if (typeof token === 'string' && token.length > 0) {
       getNotionDBList();
@@ -64,8 +134,9 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
         {...form.getInputProps('fetcherName')}
       >
         <Group mt="xs">
-          <Radio value="bgmV1" label="bgm.tv" />
-          {/* <Radio value="publicAuth" label="跳转认证" /> */}
+          <Radio value="bgmV1" label="bgm.tv (通过API)" />
+          <Radio disabled value="webBgmV1" label="bgm.tv (通过网站) (开发中)" />
+          <Radio disabled value="yurizukan" label="百合图鉴 (开发中)" />
         </Group>
       </Radio.Group>
       {form.values.fields.map((item: any, index) => (
@@ -91,13 +162,17 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
             data={
               isObject(currentSelectedDB?.properties)
                 ? [
-                    ...Object.values(currentSelectedDB?.properties).map((p: any) => ({
-                      label: p.name,
-                      value: JSON.stringify(p),
-                    })),
+                    ...Object.values(currentSelectedDB?.properties)
+                      .filter((p) => currentSupportedNotionTypes.includes(p.type))
+                      .map((p: any) => ({
+                        label: p.name,
+                        value: JSON.stringify(p),
+                        disabled: selectedNotionField.includes(p.name),
+                      })),
                     {
                       label: 'Notion封面',
                       value: JSON.stringify({ id: 'cover', name: 'cover', type: 'cover' }),
+                      disabled: selectedNotionField.includes('cover'),
                     },
                   ]
                 : []
@@ -109,6 +184,67 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
             //   }}
             {...form.getInputProps(`fields.${index}.notionFieldName`)}
           />
+          <Button
+            color="red"
+            size="xs"
+            onClick={() => {
+              form.setFieldValue(
+                'fields',
+                form.values.fields.filter((_item: any, i: number) => index !== i)
+              );
+            }}
+          >
+            删除
+          </Button>
+        </Group>
+      ))}
+      {form.values.customFields.map((item: any, index) => (
+        <Group align="flex-end" key={`custom-fields-${item.key}`}>
+          <Select
+            mt={20}
+            label="请选择对应notion属性"
+            disabled={!isObject(currentSelectedDB?.properties)}
+            data={
+              isObject(currentSelectedDB?.properties)
+                ? [
+                    ...Object.values(currentSelectedDB?.properties)
+                      .filter((p) => currentSupportedNotionTypes.includes(p.type))
+                      .map((p: any) => ({
+                        label: p.name,
+                        value: JSON.stringify(p),
+                        disabled: selectedNotionField.includes(p.name),
+                      })),
+                    {
+                      label: 'Notion封面',
+                      value: JSON.stringify({ id: 'cover', name: 'cover', type: 'cover' }),
+                      disabled: selectedNotionField.includes('cover'),
+                    },
+                  ]
+                : []
+            }
+            //   value={selectedPreset?.id}
+            //   onChange={(value: any) => {
+            //     const preset = localPreset.find((lp: any) => lp.id === value);
+            //     setSelectedPreset(preset);
+            //   }}
+            {...form.getInputProps(`customFields.${index}.notionFieldName`)}
+          />
+          {renderFormByNotionType({
+            formProps: form.getInputProps(`customFields.${index}.defaultValue`),
+            notionData: JSON.parse(form.values.customFields[index].notionFieldName || '{}'),
+          })}
+          <Button
+            color="red"
+            size="xs"
+            onClick={() => {
+              form.setFieldValue(
+                'customFields',
+                form.values.customFields.filter((_item: any, i: number) => index !== i)
+              );
+            }}
+          >
+            删除
+          </Button>
         </Group>
       ))}
       <Group mt={10}>
@@ -124,11 +260,23 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
         >
           添加属性
         </Button>
-
+        <Button
+          mt={10}
+          onClick={() =>
+            form.insertListItem('customFields', {
+              defaultValue: '',
+              notionFieldName: '',
+              key: randomId(),
+            })
+          }
+        >
+          添加自定义值
+        </Button>
         <Button
           mt={10}
           onClick={() =>
             onSave({
+              customFields: form.values.customFields,
               fields: form.values.fields,
               presetName: form.values.presetName,
               selectedDBId,

@@ -195,7 +195,7 @@ export default function NotionHomePage() {
                     notifications.show({
                       color: 'red',
                       title: '导入失败！',
-                      message: '123导入失败',
+                      message: `${title || 'unknown'}导入失败`,
                       withCloseButton: true,
                       autoClose: 2000,
                     });

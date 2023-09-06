@@ -250,6 +250,15 @@ const arrayObject_to_multi_select = (ao: any, extra: any) => {
     multi_select: arr,
   };
 };
+
+const arrayString_to_multi_select = (as: any) => {
+  const arr = as.map((item: any) => ({
+    name: item,
+  }));
+  return {
+    multi_select: arr,
+  };
+};
 const bgmURL_to_multi_select = (_: any, extra: any) => string_to_multi_select(extra.BGM_URL);
 const bgmURL_to_rich_text = (_: any, extra: any) => string_to_rich_text(extra.BGM_URL);
 const bgmURL_to_title = (_: any, extra: any) => string_to_title(extra.BGM_URL);
@@ -292,6 +301,17 @@ export function convertTypeToNotion(data: any, type: string, notionType: string,
     arrayObject_to_url: invalidConverter,
     arrayObject_to_cover: invalidConverter,
 
+    arrayString_to_checkbox: invalidConverter,
+    arrayString_to_date: invalidConverter,
+    arrayString_to_files: invalidConverter,
+    arrayString_to_multi_select,
+    arrayString_to_number: invalidConverter,
+    arrayString_to_rich_text: invalidConverter,
+    arrayString_to_title: invalidConverter,
+    arrayString_to_select: invalidConverter,
+    arrayString_to_url: invalidConverter,
+    arrayString_to_cover: invalidConverter,
+
     bgmURL_to_checkbox: invalidConverter,
     bgmURL_to_date: invalidConverter,
     bgmURL_to_files: invalidConverter,
@@ -313,7 +333,9 @@ export function convertDataToNotion({ dataList, preset }: any) {
   const notionMapping = preset.mapping;
   return dataList.map((d: any) => {
     const result: any = {
-      properties: {},
+      properties: {
+        ...(preset?.customFields ?? {}),
+      },
       parent: {
         type: 'database_id',
         database_id: preset.targetDbID,
