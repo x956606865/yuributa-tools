@@ -32,13 +32,7 @@ import { useListState } from '@mantine/hooks';
 import { IconPhoto, IconUpload, IconX } from '@tabler/icons';
 import { sortBy, uniq, uniqBy } from 'lodash';
 import { useEffect, useState } from 'react';
-import {
-  base64ToImageUrl,
-  calcSample,
-  loadImage,
-  saveCBZ,
-  saveEpub,
-} from '../../utils/output.util';
+import { base64ToImageUrl, calcSample, loadImage, saveCBZ, saveEpub } from '~/utils/output.util';
 
 async function checkPadding(img: any, { loggerHandler, form }: any) {
   loggerHandler.append('开始检测padding...');

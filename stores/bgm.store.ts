@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { getLastYuriBgmByDate } from '~/pages/notion/utils';
+import { getLastYuriBgmByDate } from '~/utils/client/utils';
 
 export const useBGMStore = create(
   devtools(

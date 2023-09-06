@@ -11,7 +11,7 @@ module.exports = withBundleAnalyzer({
   eslint: {
     ignoreDuringBuilds: true,
   },
-  pageExtensions: ['tsx'],
+  // pageExtensions: ['tsx'],
   webpack: (config, { isServer }) => {
     // 配置添加支持.ejs文件的加载器
     config.resolve.alias['~'] = path.resolve(__dirname);

@@ -1,21 +1,8 @@
-import {
-  Box,
-  Button,
-  Center,
-  Container,
-  Group,
-  LoadingOverlay,
-  Radio,
-  TextInput,
-  Title,
-} from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { useLocalStorage } from '@mantine/hooks';
+import { Button, Group, Radio, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { notifications } from '@mantine/notifications';
-import { IconCheck } from '@tabler/icons';
 import { IconExclamationCircle } from '@tabler/icons-react';
-import { checkToken } from '../../utils';
+import { checkToken } from '~/utils/client/utils';
 
 export default function CheckToken({ onTokenValid = () => {}, form }: any) {
   //   const [token, setToken] = useState<string | undefined>(undefined);

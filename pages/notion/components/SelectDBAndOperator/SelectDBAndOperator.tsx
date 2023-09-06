@@ -1,26 +1,4 @@
-import {
-  Box,
-  Button,
-  Center,
-  Container,
-  Group,
-  LoadingOverlay,
-  Radio,
-  Select,
-  TextInput,
-  Title,
-} from '@mantine/core';
-import { useRequest } from 'ahooks';
-
-import { useForm } from '@mantine/form';
-import { useLocalStorage } from '@mantine/hooks';
-import { useState } from 'react';
-import { notifications } from '@mantine/notifications';
-import { IconCheck } from '@tabler/icons';
-import { IconExclamationCircle } from '@tabler/icons-react';
-import { checkToken, getDatabaseList, getNotionDBTitle } from '../../utils';
-import { useNotionStore } from '~/stores/notion.store';
-import { shallow } from 'zustand/shallow';
+import { Group, Radio } from '@mantine/core';
 
 export default function SelectDBAndOperator({ form }: any) {
   //   console.log('%c [ token ]-23', 'font-size:13px; background:pink; color:#bf2c9f;', token);

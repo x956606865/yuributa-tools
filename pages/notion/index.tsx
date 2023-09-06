@@ -14,7 +14,7 @@ import {
   convertDataToNotion,
   createNotionPage,
   getFetcherMappingByName,
-} from './utils';
+} from '~/utils/client/utils';
 import CheckToken from './components/CheckToken/CheckToken';
 import SelectDBAndOperator from './components/SelectDBAndOperator/SelectDBAndOperator';
 import PresetManage from './components/PresetManage/PresetManage';

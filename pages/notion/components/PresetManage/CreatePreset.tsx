@@ -4,7 +4,7 @@ import { useForm } from '@mantine/form';
 import { randomId } from '@mantine/hooks';
 import { useEffect, useMemo } from 'react';
 import { isObject } from 'lodash';
-import { getFetcherMappingByName, getNotionDBTitle } from '../../utils';
+import { getFetcherMappingByName, getNotionDBTitle } from '~/utils/client/utils';
 import { useNotionStore } from '~/stores/notion.store';
 
 interface CreatePresetProps {

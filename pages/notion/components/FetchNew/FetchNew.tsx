@@ -10,7 +10,7 @@ import {
 } from '@mantine/core';
 
 import { useEffect, useState } from 'react';
-import { convertDataToStandard } from '../../utils';
+import { convertDataToStandard } from '~/utils/client/utils';
 import { useBGMStore } from '~/stores/bgm.store';
 import { useNotionStore } from '~/stores/notion.store';
 

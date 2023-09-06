@@ -44,7 +44,7 @@ import {
   loadImage,
   saveCBZ,
   saveEpub,
-} from '../../utils/output.util';
+} from '~/utils/output.util';
 
 async function checkPadding(type: string, img: any, { loggerHandler, form }: any) {
   if (type === 'single') {
@@ -53,7 +53,11 @@ async function checkPadding(type: string, img: any, { loggerHandler, form }: any
   return checkImgInfo(img, { loggerHandler, form, isCheckMiddle: true });
 }
 
-async function splitMangaList(imgList: any, targetImgSize: any, { loggerHandler, form, paddingResult, coverName }: any) {
+async function splitMangaList(
+  imgList: any,
+  targetImgSize: any,
+  { loggerHandler, form, paddingResult, coverName }: any
+) {
   const promises = imgList.map(async (img: any, index: any) => {
     console.log(`process images ${index + 1}/${imgList.length}`);
     loggerHandler.append(`process images ${index}/${imgList.length}`);
@@ -66,7 +70,11 @@ async function splitMangaList(imgList: any, targetImgSize: any, { loggerHandler,
     let rightPadding;
     let middleWidth;
     let baseColor;
-    if (form.values.paddingCheckMethod === 'sample' || !form.values.isProcessPadding || !form.values.autoDetectPaddingWidth) {
+    if (
+      form.values.paddingCheckMethod === 'sample' ||
+      !form.values.isProcessPadding ||
+      !form.values.autoDetectPaddingWidth
+    ) {
       ({ leftPadding, rightPadding, middleWidth, baseColor } = paddingResult);
     } else {
       ({ leftPadding, rightPadding, middleWidth, baseColor } = await checkPadding('double', img, {
@@ -74,7 +82,9 @@ async function splitMangaList(imgList: any, targetImgSize: any, { loggerHandler,
         loggerHandler,
       }));
     }
-    loggerHandler.append(`使用的padding为：${leftPadding},${rightPadding},${middleWidth},${baseColor}`);
+    loggerHandler.append(
+      `使用的padding为：${leftPadding},${rightPadding},${middleWidth},${baseColor}`
+    );
 
     // Load the image into an Image object
     const imgObj: any = await loadImage(img);
@@ -207,7 +217,11 @@ async function splitMangaList(imgList: any, targetImgSize: any, { loggerHandler,
 
   return Promise.all(promises);
 }
-async function resizeMangaList(imgList: any, targetImgSize: any, { loggerHandler, form, paddingResult, coverName }: any) {
+async function resizeMangaList(
+  imgList: any,
+  targetImgSize: any,
+  { loggerHandler, form, paddingResult, coverName }: any
+) {
   const promises = imgList.map(async (img: any, index: any) => {
     console.log(`process images ${index + 1}/${imgList.length}`);
     loggerHandler.append(`process images ${index}/${imgList.length}`);
@@ -317,7 +331,11 @@ async function resizeMangaList(imgList: any, targetImgSize: any, { loggerHandler
 
   return Promise.all(promises);
 }
-async function processImages2(imgList: any, targetImgSize: any, { loggerHandler, form, coverName }: any) {
+async function processImages2(
+  imgList: any,
+  targetImgSize: any,
+  { loggerHandler, form, coverName }: any
+) {
   const checkMethod = form.values.paddingCheckMethod;
   const paddingResult: any = {};
   if (imgList.length === 0) {
@@ -331,17 +349,7 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
       const imgWidth = imgObj.width;
       canvas.width = imgWidth;
       canvas.height = imgObj.height;
-      ctx.drawImage(
-        imgObj,
-        0,
-        0,
-        imgWidth,
-        imgObj.height,
-        0,
-        0,
-        imgWidth,
-        imgObj.height
-      );
+      ctx.drawImage(imgObj, 0, 0, imgWidth, imgObj.height, 0, 0, imgWidth, imgObj.height);
       if (img.name.includes('cover')) {
         return {
           cover: canvas.toDataURL('image/jpeg', 0.8),
@@ -376,10 +384,14 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
     for (const i of sampleIndex) {
       const img = imgList[i];
       // eslint-disable-next-line no-await-in-loop
-      const { leftPadding, rightPadding, middleWidth, baseColor } = await checkPadding(form.values.extraProcess === 'split' ? 'double' : 'split', img, {
-        loggerHandler,
-        form,
-      });
+      const { leftPadding, rightPadding, middleWidth, baseColor } = await checkPadding(
+        form.values.extraProcess === 'split' ? 'double' : 'split',
+        img,
+        {
+          loggerHandler,
+          form,
+        }
+      );
       r.leftPadding.push(leftPadding);
       r.rightPadding.push(rightPadding);
       r.middleWidth.push(middleWidth);
@@ -397,21 +409,29 @@ async function processImages2(imgList: any, targetImgSize: any, { loggerHandler,
   }
 
   if (form.values.extraProcess === 'resize') {
-    return resizeMangaList(imgList, targetImgSize, { loggerHandler, form, paddingResult, coverName });
-  } if (form.values.extraProcess === 'split') {
-    return splitMangaList(imgList, targetImgSize, { loggerHandler, form, paddingResult, coverName });
+    return resizeMangaList(imgList, targetImgSize, {
+      loggerHandler,
+      form,
+      paddingResult,
+      coverName,
+    });
+  }
+  if (form.values.extraProcess === 'split') {
+    return splitMangaList(imgList, targetImgSize, {
+      loggerHandler,
+      form,
+      paddingResult,
+      coverName,
+    });
   }
   return [];
 }
-async function processCover(img: any, { form,
-  loggerHandler }: any) {
+async function processCover(img: any, { form, loggerHandler }: any) {
   const paddings = await checkPadding('single', img, {
     form,
     loggerHandler,
   });
-  loggerHandler.append(
-    `Cover 使用的padding为：${paddings.leftPadding},${paddings.rightPadding}`
-  );
+  loggerHandler.append(`Cover 使用的padding为：${paddings.leftPadding},${paddings.rightPadding}`);
 
   const imgObj: any = await loadImage(img);
   const canvas = document.createElement('canvas');
@@ -443,7 +463,11 @@ function getFileName({ form }: any) {
   if (form.values.customFileName) {
     return `${form.values.fileName}.${form.values.outputType}`;
   }
-  return `${form.values.name}${form.values.author.length === 0 ? '' : `[${form.values.author}]`}${form.values.volume === 0 ? '' : `[${form.values.volume < 10 ? `0${form.values.volume}` : form.values.volume}]`}`;
+  return `${form.values.name}${form.values.author.length === 0 ? '' : `[${form.values.author}]`}${
+    form.values.volume === 0
+      ? ''
+      : `[${form.values.volume < 10 ? `0${form.values.volume}` : form.values.volume}]`
+  }`;
 }
 const SizePreset: any = {
   leaf2: {
@@ -527,15 +551,11 @@ export default function HomePage() {
         height: form.values.customDeviceHeight,
       };
     }
-    const processedList = await processImages2(
-      unProcessedList,
-      deviceSize,
-      {
-        loggerHandler,
-        form,
-        coverName: coverImg.name,
-      }
-    );
+    const processedList = await processImages2(unProcessedList, deviceSize, {
+      loggerHandler,
+      form,
+      coverName: coverImg.name,
+    });
     const newList: any = [];
     const { readFrom } = form.values;
     processedList.forEach((item) => {
@@ -610,30 +630,26 @@ export default function HomePage() {
           setPreviewImage(null);
         }}
         withCloseButton={false}
-      // title="图片预览"
+        // title="图片预览"
       >
         <LoadingOverlay visible={isLoadingPreviewImage} />
         <ScrollArea h={1000}>
           <Center>
-            {
-              previewImage && (
-                <MImage
-                  width={600}
-                  height="100%"
-                  src={previewImage.imageUrl}
-                  imageProps={{
-                    onLoad: () => {
-                      URL.revokeObjectURL(previewImage.imageUrl);
-                      setIsLoadingPreviewImage(false);
-                    },
-                  }}
-                />
-              )
-            }
+            {previewImage && (
+              <MImage
+                width={600}
+                height="100%"
+                src={previewImage.imageUrl}
+                imageProps={{
+                  onLoad: () => {
+                    URL.revokeObjectURL(previewImage.imageUrl);
+                    setIsLoadingPreviewImage(false);
+                  },
+                }}
+              />
+            )}
           </Center>
-
         </ScrollArea>
-
       </Modal>
       <Box pos="relative">
         <Center>
@@ -664,26 +680,45 @@ export default function HomePage() {
               placeholder="Pick one"
               searchable
               nothingFound="No options"
-              data={Object.entries(SizePreset).map(([key, v]: any) => ({ label: v.label, value: key }))}
+              data={Object.entries(SizePreset).map(([key, v]: any) => ({
+                label: v.label,
+                value: key,
+              }))}
               {...form.getInputProps('targetDevice')}
             />
-            {
-              form.values.targetDevice === 'custom' && (
-                <Group mt={20}>
-                  <NumberInput min={0} label="自定义宽度" {...form.getInputProps('customDeviceWidth')} />
-                  <NumberInput min={0} label="自定义高度" {...form.getInputProps('customDeviceHeight')} />
-                </Group>)
-            }
+            {form.values.targetDevice === 'custom' && (
+              <Group mt={20}>
+                <NumberInput
+                  min={0}
+                  label="自定义宽度"
+                  {...form.getInputProps('customDeviceWidth')}
+                />
+                <NumberInput
+                  min={0}
+                  label="自定义高度"
+                  {...form.getInputProps('customDeviceHeight')}
+                />
+              </Group>
+            )}
             <TextInput mt={20} label="作品名称" {...form.getInputProps('name')} />
             <Group mt={20} align="flex-end" grow>
-              <TextInput disabled={!form.values.customFileName} label="文件名称" {...form.getInputProps('fileName')} />
+              <TextInput
+                disabled={!form.values.customFileName}
+                label="文件名称"
+                {...form.getInputProps('fileName')}
+              />
               <Switch
                 label="自定义文件名"
                 name="customFileName"
                 {...form.getInputProps('customFileName', { type: 'checkbox' })}
               />
             </Group>
-            <NumberInput min={0} mt={20} label="第x卷 (无卷数漫画设为0)" {...form.getInputProps('volume')} />
+            <NumberInput
+              min={0}
+              mt={20}
+              label="第x卷 (无卷数漫画设为0)"
+              {...form.getInputProps('volume')}
+            />
 
             {form.values.outputType === 'epub' && (
               <TextInput mt={20} label="作者" {...form.getInputProps('author')} />
@@ -692,22 +727,24 @@ export default function HomePage() {
               mt={20}
               onDrop={(files) => {
                 // console.log('accepted files', files);
-                const uniqueList = sortBy(uniqBy([...fileList, ...files], 'name'), f => f.name);
+                const uniqueList = sortBy(uniqBy([...fileList, ...files], 'name'), (f) => f.name);
                 if (!coverImg) {
                   // 尝试嗅探封面
-                  const cover = uniqueList.find(f => f.name.includes('cover'));
+                  const cover = uniqueList.find((f) => f.name.includes('cover'));
                   let target;
                   if (cover) {
                     target = cover;
                   } else {
                     target = uniqueList[0];
                   }
-                  processCover(target, { form, loggerHandler }).then(result => base64ToImageUrl(result.cover).then(imageUrl => {
-                    setCoverImg({
-                      ...result,
-                      imageUrl,
-                    });
-                  }));
+                  processCover(target, { form, loggerHandler }).then((result) =>
+                    base64ToImageUrl(result.cover).then((imageUrl) => {
+                      setCoverImg({
+                        ...result,
+                        imageUrl,
+                      });
+                    })
+                  );
                 }
                 fileListHandler.setState(uniqueList);
               }}
@@ -717,7 +754,7 @@ export default function HomePage() {
                 [form.values.imgType]:
                   form.values.imgType === 'application/vnd.rar' ? ['.rar'] : [],
               }}
-            //   {...props}
+              //   {...props}
             >
               <Group
                 position="center"
@@ -756,64 +793,82 @@ export default function HomePage() {
               <Accordion.Item value="baseInfo">
                 <Accordion.Control>基础信息</Accordion.Control>
                 <Accordion.Panel pl={20} pr={20}>
-                  {
-                    fileList.length > 0 ? (
-                      <Grid>
-                        <Grid.Col span={4}>
-                          {
-                            coverImg && (
-                              <Stack>
-                                <MImage
-                                  width={200}
-                                  height="100%"
-                                  src={coverImg.imageUrl}
-                                  imageProps={{ onLoad: () => URL.revokeObjectURL(coverImg.imageUrl) }}
-                                />
-                                <Select
-                                  value={coverImg.name}
-                                  w={200}
-                                  data={fileList.map(f => ({ value: f.name, label: f.name, disabled: f.name === coverImg.name }))}
-                                  onChange={fileName => {
-                                    const cover = fileList.find(f => f.name === fileName);
-                                    let target;
-                                    if (cover) {
-                                      target = cover;
-                                      processCover(target, { form, loggerHandler }).then(result => base64ToImageUrl(result.cover).then(imageUrl => {
-                                        setCoverImg({
-                                          ...result,
-                                          imageUrl,
-                                        });
-                                      }));
-                                    }
-                                  }}
-                                />
-                              </Stack>
-                            )
-                          }
-
-                        </Grid.Col>
-                        <Grid.Col span={8}>
-                          <ScrollArea h={250}>
-                            <Group>
-                              <Text fw={700}>已处理文件/当前文件:</Text> <Text color="green">{`${resultImgs.length}/${fileList.length}`}</Text>
-
-                            </Group>
-                            <Group>
-                              <Text fw={700}>保存为:</Text><Text color="green"> {`${getFileName({ form })}.${form.values.outputType}`}</Text>
-                            </Group>
-                            <Group>
-                              <Text fw={700}>输出分辨率:</Text><Text color="green"> {`${form.values.targetDevice === 'custom' ? form.values.customDeviceWidth : SizePreset[form.values.targetDevice].width}x${form.values.targetDevice === 'custom' ? form.values.customDeviceHeight : SizePreset[form.values.targetDevice].height}`}</Text>
-                            </Group>
-                            <Group>
-                              <Text fw={700}>额外处理:</Text><Text color="green"> {ProcessType[form.values.extraProcess]}</Text>
-                            </Group>
-                          </ScrollArea>
-                        </Grid.Col>
-                      </Grid>
-                    )
-                      : <Center>请上传图片</Center>
-                  }
-
+                  {fileList.length > 0 ? (
+                    <Grid>
+                      <Grid.Col span={4}>
+                        {coverImg && (
+                          <Stack>
+                            <MImage
+                              width={200}
+                              height="100%"
+                              src={coverImg.imageUrl}
+                              imageProps={{ onLoad: () => URL.revokeObjectURL(coverImg.imageUrl) }}
+                            />
+                            <Select
+                              value={coverImg.name}
+                              w={200}
+                              data={fileList.map((f) => ({
+                                value: f.name,
+                                label: f.name,
+                                disabled: f.name === coverImg.name,
+                              }))}
+                              onChange={(fileName) => {
+                                const cover = fileList.find((f) => f.name === fileName);
+                                let target;
+                                if (cover) {
+                                  target = cover;
+                                  processCover(target, { form, loggerHandler }).then((result) =>
+                                    base64ToImageUrl(result.cover).then((imageUrl) => {
+                                      setCoverImg({
+                                        ...result,
+                                        imageUrl,
+                                      });
+                                    })
+                                  );
+                                }
+                              }}
+                            />
+                          </Stack>
+                        )}
+                      </Grid.Col>
+                      <Grid.Col span={8}>
+                        <ScrollArea h={250}>
+                          <Group>
+                            <Text fw={700}>已处理文件/当前文件:</Text>{' '}
+                            <Text color="green">{`${resultImgs.length}/${fileList.length}`}</Text>
+                          </Group>
+                          <Group>
+                            <Text fw={700}>保存为:</Text>
+                            <Text color="green">
+                              {' '}
+                              {`${getFileName({ form })}.${form.values.outputType}`}
+                            </Text>
+                          </Group>
+                          <Group>
+                            <Text fw={700}>输出分辨率:</Text>
+                            <Text color="green">
+                              {' '}
+                              {`${
+                                form.values.targetDevice === 'custom'
+                                  ? form.values.customDeviceWidth
+                                  : SizePreset[form.values.targetDevice].width
+                              }x${
+                                form.values.targetDevice === 'custom'
+                                  ? form.values.customDeviceHeight
+                                  : SizePreset[form.values.targetDevice].height
+                              }`}
+                            </Text>
+                          </Group>
+                          <Group>
+                            <Text fw={700}>额外处理:</Text>
+                            <Text color="green"> {ProcessType[form.values.extraProcess]}</Text>
+                          </Group>
+                        </ScrollArea>
+                      </Grid.Col>
+                    </Grid>
+                  ) : (
+                    <Center>请上传图片</Center>
+                  )}
                 </Accordion.Panel>
               </Accordion.Item>
               <Accordion.Item value="setting">
@@ -826,141 +881,161 @@ export default function HomePage() {
                     placeholder="Pick one"
                     searchable
                     nothingFound="No options"
-                    data={Object.keys(ProcessType).map(k => ({ label: ProcessType[k], value: k }))}
+                    data={Object.keys(ProcessType).map((k) => ({
+                      label: ProcessType[k],
+                      value: k,
+                    }))}
                     {...form.getInputProps('extraProcess')}
                   />
-                  {
-                    form.values.extraProcess !== 'none' && (
-                      <Box mt={20}>
-                        {
-                          form.values.extraProcess === 'split' && (
-                            <Select
-                              mt={10}
-                              name="readFrom"
-                              label="选择漫画翻页类型"
-                              placeholder="Pick one"
-                              searchable
-                              nothingFound="No options"
-                              data={[
-                                { label: '从右往左', value: 'rtl' },
-                                { label: '从左往右', value: 'ltr' },
-                              ]}
-                              {...form.getInputProps('readFrom')}
-                            />
-                          )
-                        }
-                        <Group mt={20}>
+                  {form.values.extraProcess !== 'none' && (
+                    <Box mt={20}>
+                      {form.values.extraProcess === 'split' && (
+                        <Select
+                          mt={10}
+                          name="readFrom"
+                          label="选择漫画翻页类型"
+                          placeholder="Pick one"
+                          searchable
+                          nothingFound="No options"
+                          data={[
+                            { label: '从右往左', value: 'rtl' },
+                            { label: '从左往右', value: 'ltr' },
+                          ]}
+                          {...form.getInputProps('readFrom')}
+                        />
+                      )}
+                      <Group mt={20}>
+                        <Switch
+                          label="裁剪padding"
+                          name="isProcessPadding"
+                          {...form.getInputProps('isProcessPadding', { type: 'checkbox' })}
+                        />
+                        {form.values.isProcessPadding && (
                           <Switch
-                            label="裁剪padding"
-                            name="isProcessPadding"
-                            {...form.getInputProps('isProcessPadding', { type: 'checkbox' })}
+                            label="自动检测padding颜色"
+                            name="autoDetectPaddingColor"
+                            {...form.getInputProps('autoDetectPaddingColor', { type: 'checkbox' })}
                           />
-                          {
-                            form.values.isProcessPadding && (
-                              <Switch
-                                label="自动检测padding颜色"
-                                name="autoDetectPaddingColor"
-                                {...form.getInputProps('autoDetectPaddingColor', { type: 'checkbox' })}
-                              />
-                            )
-                          }
-                          {
-                            form.values.isProcessPadding && (
-                              <Switch
-                                label="自动检测padding宽度"
-                                name="autoDetectPaddingWidth"
-                                {...form.getInputProps('autoDetectPaddingWidth', { type: 'checkbox' })}
-                              />
-                            )
-                          }
-                        </Group>
-
-                        {!form.values.autoDetectPaddingColor && (
-                          <Box mt={10}>
-                            <Select
-                              mt={10}
-                              name="paddingColor"
-                              label="两边padding颜色"
-                              placeholder="Pick one"
-                              searchable
-                              nothingFound="No options"
-                              data={[
-                                { label: '白色', value: 'white' },
-                                { label: '黑色', value: 'black' },
-                              ]}
-                              {...form.getInputProps('paddingColor')}
-                            />
-                            <Select
-                              mt={10}
-                              name="middlePaddingColor"
-                              label="中间padding颜色"
-                              placeholder="Pick one"
-                              searchable
-                              nothingFound="No options"
-                              data={[
-                                { label: '白色', value: 'white' },
-                                { label: '黑色', value: 'black' },
-                              ]}
-                              {...form.getInputProps('middlePaddingColor')}
-                            />
-                          </Box>
                         )}
-                        {
-                          !form.values.autoDetectPaddingWidth && (
-                            <Group mt={20}>
-                              <NumberInput min={0} label="自定义左侧padding宽度" {...form.getInputProps('customLeftPadding')} />
-                              <NumberInput min={0} label="自定义右侧padding宽度" {...form.getInputProps('customRightPadding')} />
-                              <NumberInput min={0} label="自定义中间padding宽度" {...form.getInputProps('customMiddlePadding')} />
-                            </Group>)
-                        }
-                        <Radio.Group
-                          mt={20}
-                          name="paddingCheckMethod"
-                          label="Padding的检测方式"
-                          {...form.getInputProps('paddingCheckMethod')}
-                        >
-                          <Group mt="xs">
-                            <Radio value="full" label="全量检测" />
-                            <Radio value="sample" label="样本检测" />
-                          </Group>
-                        </Radio.Group>
+                        {form.values.isProcessPadding && (
+                          <Switch
+                            label="自动检测padding宽度"
+                            name="autoDetectPaddingWidth"
+                            {...form.getInputProps('autoDetectPaddingWidth', { type: 'checkbox' })}
+                          />
+                        )}
+                      </Group>
 
-                        <Title mt={20} order={6}>
-                          白色检测阈值
-                        </Title>
-
-                        <Slider
-                          labelAlwaysOn
-                          mt={10}
-                          label={form.values.whiteThreshold}
-                          min={0}
-                          max={255}
-                          name="whiteThreshold"
-                          {...form.getInputProps('whiteThreshold')}
-                        />
-                        <Title mt={20} order={6}>
-                          黑色检测阈值
-                        </Title>
-                        <Slider
-                          labelAlwaysOn
-                          mt={10}
-                          label={form.values.blackThreshold}
-                          min={0}
-                          max={255}
-                          name="blackThreshold"
-                          {...form.getInputProps('blackThreshold')}
-                        />
+                      {!form.values.autoDetectPaddingColor && (
+                        <Box mt={10}>
+                          <Select
+                            mt={10}
+                            name="paddingColor"
+                            label="两边padding颜色"
+                            placeholder="Pick one"
+                            searchable
+                            nothingFound="No options"
+                            data={[
+                              { label: '白色', value: 'white' },
+                              { label: '黑色', value: 'black' },
+                            ]}
+                            {...form.getInputProps('paddingColor')}
+                          />
+                          <Select
+                            mt={10}
+                            name="middlePaddingColor"
+                            label="中间padding颜色"
+                            placeholder="Pick one"
+                            searchable
+                            nothingFound="No options"
+                            data={[
+                              { label: '白色', value: 'white' },
+                              { label: '黑色', value: 'black' },
+                            ]}
+                            {...form.getInputProps('middlePaddingColor')}
+                          />
+                        </Box>
+                      )}
+                      {!form.values.autoDetectPaddingWidth && (
                         <Group mt={20}>
-                          <NumberInput min={0} label="左侧宽度修复" {...form.getInputProps('positionFix.left')} />
-                          <NumberInput min={0} label="右侧宽度修复" {...form.getInputProps('positionFix.right')} />
-                          <NumberInput min={0} label="上侧宽度修复" {...form.getInputProps('positionFix.top')} />
-                          <NumberInput min={0} label="下侧宽度修复" {...form.getInputProps('positionFix.bottom')} />
-
+                          <NumberInput
+                            min={0}
+                            label="自定义左侧padding宽度"
+                            {...form.getInputProps('customLeftPadding')}
+                          />
+                          <NumberInput
+                            min={0}
+                            label="自定义右侧padding宽度"
+                            {...form.getInputProps('customRightPadding')}
+                          />
+                          <NumberInput
+                            min={0}
+                            label="自定义中间padding宽度"
+                            {...form.getInputProps('customMiddlePadding')}
+                          />
                         </Group>
+                      )}
+                      <Radio.Group
+                        mt={20}
+                        name="paddingCheckMethod"
+                        label="Padding的检测方式"
+                        {...form.getInputProps('paddingCheckMethod')}
+                      >
+                        <Group mt="xs">
+                          <Radio value="full" label="全量检测" />
+                          <Radio value="sample" label="样本检测" />
+                        </Group>
+                      </Radio.Group>
 
-                      </Box>)
+                      <Title mt={20} order={6}>
+                        白色检测阈值
+                      </Title>
 
-                  }
+                      <Slider
+                        labelAlwaysOn
+                        mt={10}
+                        label={form.values.whiteThreshold}
+                        min={0}
+                        max={255}
+                        name="whiteThreshold"
+                        {...form.getInputProps('whiteThreshold')}
+                      />
+                      <Title mt={20} order={6}>
+                        黑色检测阈值
+                      </Title>
+                      <Slider
+                        labelAlwaysOn
+                        mt={10}
+                        label={form.values.blackThreshold}
+                        min={0}
+                        max={255}
+                        name="blackThreshold"
+                        {...form.getInputProps('blackThreshold')}
+                      />
+                      <Group mt={20}>
+                        <NumberInput
+                          min={0}
+                          label="左侧宽度修复"
+                          {...form.getInputProps('positionFix.left')}
+                        />
+                        <NumberInput
+                          min={0}
+                          label="右侧宽度修复"
+                          {...form.getInputProps('positionFix.right')}
+                        />
+                        <NumberInput
+                          min={0}
+                          label="上侧宽度修复"
+                          {...form.getInputProps('positionFix.top')}
+                        />
+                        <NumberInput
+                          min={0}
+                          label="下侧宽度修复"
+                          {...form.getInputProps('positionFix.bottom')}
+                        />
+                      </Group>
+                    </Box>
+                  )}
                   <Title mt={20} order={6}>
                     噪点容纳度
                   </Title>
@@ -974,7 +1049,6 @@ export default function HomePage() {
                     name="allowNoise"
                     {...form.getInputProps('allowNoise')}
                   />
-
                 </Accordion.Panel>
               </Accordion.Item>
               <Accordion.Item value="bookInfo">
@@ -994,7 +1068,6 @@ export default function HomePage() {
                       ]}
                       {...form.getInputProps('outputType')}
                     />
-
                   </Box>
                 </Accordion.Panel>
               </Accordion.Item>
@@ -1096,7 +1169,6 @@ export default function HomePage() {
           </Container>
         </Center>
       </Box>
-
     </>
   );
 }

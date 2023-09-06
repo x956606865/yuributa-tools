@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { getDatabaseList } from '~/pages/notion/utils';
+import { getDatabaseList } from '~/utils/client/utils';
 
 export const useNotionStore = create(
   devtools(

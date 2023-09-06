@@ -1,6 +1,6 @@
 import { toNumber } from 'lodash';
 import moment from 'moment';
-import { BGMMappingV1 } from './components/PresetManage/fieldMapping/bgm';
+import BGMMappingV1 from '~/pages/notion/components/PresetManage/fieldMapping/bgm.json';
 
 export const fetcherMapping: Record<string, any> = {
   bgmV1: BGMMappingV1,

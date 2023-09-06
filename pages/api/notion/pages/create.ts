@@ -1,4 +1,5 @@
-import { getNotionClient } from '../utils';
+// import { getNotionClient } from '../../../../utils/server/utils';
+import { getNotionClient } from '~/utils/server/utils';
 
 export default async function handler(req: any, res: any) {
   if (typeof req.body.token === 'string' && req.body.token.length > 0) {
