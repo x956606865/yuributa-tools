@@ -70,7 +70,7 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
   const setSelectedDBId = useNotionStore((store: any) => store.setSelectedDBId);
   const selectedDBId = useNotionStore((store: any) => store.selectedDBId);
   const token = useNotionStore((store: any) => store.token);
-  const [selectedNotionField, setSelectedNotionField] = useState([]);
+  const [selectedNotionField, setSelectedNotionField] = useState<string[]>([]);
 
   const form = useForm({
     initialValues: {
@@ -86,19 +86,23 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
   );
   // console.log('%c [ form ]-74', 'font-size:13px; background:pink; color:#bf2c9f;', form.values);
   useEffect(() => {
-    const newSelectedNotionField = [...selectedNotionField];
+    const newSelectedNotionField: any = [...selectedNotionField];
     form.values.fields.forEach((f: any) => {
       try {
         const nd: any = JSON.parse(f.notionFieldName);
 
         newSelectedNotionField.push(nd.name);
-      } catch (e) {}
+      } catch (e) {
+        //
+      }
     });
     form.values.customFields.forEach((f: any) => {
       try {
         const nd: any = JSON.parse(f.notionFieldName);
         newSelectedNotionField.push(nd.name);
-      } catch (e) {}
+      } catch (e) {
+        //
+      }
     });
     setSelectedNotionField(uniq(newSelectedNotionField));
   }, [form.values.fields, form.values.customFields]);
@@ -163,7 +167,7 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
               isObject(currentSelectedDB?.properties)
                 ? [
                     ...Object.values(currentSelectedDB?.properties)
-                      .filter((p) => currentSupportedNotionTypes.includes(p.type))
+                      .filter((p: any) => currentSupportedNotionTypes.includes(p.type))
                       .map((p: any) => ({
                         label: p.name,
                         value: JSON.stringify(p),
@@ -208,17 +212,12 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
               isObject(currentSelectedDB?.properties)
                 ? [
                     ...Object.values(currentSelectedDB?.properties)
-                      .filter((p) => currentSupportedNotionTypes.includes(p.type))
+                      .filter((p: any) => currentSupportedNotionTypes.includes(p.type))
                       .map((p: any) => ({
                         label: p.name,
                         value: JSON.stringify(p),
                         disabled: selectedNotionField.includes(p.name),
                       })),
-                    {
-                      label: 'Notion封面',
-                      value: JSON.stringify({ id: 'cover', name: 'cover', type: 'cover' }),
-                      disabled: selectedNotionField.includes('cover'),
-                    },
                   ]
                 : []
             }
@@ -231,7 +230,9 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
           />
           {renderFormByNotionType({
             formProps: form.getInputProps(`customFields.${index}.defaultValue`),
-            notionData: JSON.parse(form.values.customFields[index].notionFieldName || '{}'),
+            notionData: JSON.parse(
+              (form.values.customFields[index] as any).notionFieldName || '{}'
+            ),
           })}
           <Button
             color="red"
