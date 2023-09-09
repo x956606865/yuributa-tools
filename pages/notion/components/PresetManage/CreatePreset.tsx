@@ -167,6 +167,7 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
             data={fetcherMapping.map((fm: any) => ({
               value: fm.fieldName,
               label: fm.disPlayName,
+              group: typeof fm.infoBoxKey === 'string' ? '实验性采集数据' : '基础属性',
             }))}
             //   value={selectedPreset?.id}
             //   onChange={(value: any) => {
@@ -188,11 +189,13 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
                         label: p.name,
                         value: JSON.stringify(p),
                         disabled: selectedNotionField.includes(p.name),
+                        group: 'Notion自定义属性',
                       })),
                     {
                       label: 'Notion封面',
                       value: JSON.stringify({ id: 'cover', name: 'cover', type: 'cover' }),
                       disabled: selectedNotionField.includes('cover'),
+                      group: 'Notion页面属性',
                     },
                   ]
                 : []
