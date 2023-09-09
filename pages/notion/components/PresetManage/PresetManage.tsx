@@ -14,9 +14,17 @@ interface GenPresetProps {
   selectedDBId: string;
   fetcher: any;
   customFields: any;
+  fetchType: string;
 }
 
-const genPreset = ({ fields, presetName, selectedDBId, fetcher, customFields }: GenPresetProps) => {
+const genPreset = ({
+  fields,
+  presetName,
+  selectedDBId,
+  fetcher,
+  customFields,
+  fetchType,
+}: GenPresetProps) => {
   // console.log(
   //   '%c [ fields,presetName ]-121',
   //   'font-size:13px; background:pink; color:#bf2c9f;',
@@ -29,6 +37,7 @@ const genPreset = ({ fields, presetName, selectedDBId, fetcher, customFields }: 
     customFields: {},
     fetcher,
     targetDbID: selectedDBId,
+    fetchType,
     id: `${presetName}-${selectedDBId}`,
   };
   fields.forEach((field: any) => {
@@ -109,7 +118,7 @@ export default function PresetManage({ onFinished = () => {} }: any) {
       </Group>
       {isCreatingPreset && (
         <CreatePreset
-          onSave={({ fields, presetName, selectedDBId, fetcher, customFields }) => {
+          onSave={({ fields, presetName, selectedDBId, fetcher, customFields, fetchType }) => {
             // console.log(
             //   '%c [ fields,presetName ]-121',
             //   'font-size:13px; background:pink; color:#bf2c9f;',
@@ -122,6 +131,7 @@ export default function PresetManage({ onFinished = () => {} }: any) {
               selectedDBId,
               customFields,
               fetcher,
+              fetchType,
             });
             console.log(preset);
 

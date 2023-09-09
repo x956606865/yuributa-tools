@@ -17,6 +17,7 @@ import { useNotionStore } from '~/stores/notion.store';
 interface FetchNewProps {
   dateString: string;
   onSave: (data: any) => void;
+  fetchType: string;
 }
 
 interface StandardMangaProps {
@@ -26,7 +27,7 @@ interface StandardMangaProps {
   cover: string;
 }
 
-export default function FetchNew({ dateString, onSave }: FetchNewProps) {
+export default function FetchBGMV1New({ dateString, onSave, fetchType }: FetchNewProps) {
   // const selectedPreset = useNotionStore((store: any) => store.selectedPreset);
   // const setSelectedPreset = useNotionStore((store: any) => store.setSelectedPreset);
   const fetchBGMListByDate = useBGMStore((store: any) => store.fetchBGMListByDate);
@@ -38,9 +39,9 @@ export default function FetchNew({ dateString, onSave }: FetchNewProps) {
 
   useEffect(() => {
     if (typeof dateString === 'string') {
-      fetchBGMListByDate(dateString);
+      fetchBGMListByDate(dateString, fetchType);
     }
-  }, [dateString]);
+  }, [dateString, fetchType]);
   useEffect(() => {
     // console.log(
     //   '%c [ currentBGMList ]-73',

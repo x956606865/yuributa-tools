@@ -7,9 +7,9 @@ export const useBGMStore = create(
     (set) => ({
       currentBGMList: [],
       isFetchingBGMList: false,
-      fetchBGMListByDate: async (dateString: string) => {
+      fetchBGMListByDate: async (dateString: string, fetchType: string) => {
         set({ isFetchingBGMList: true, currentBGMList: [] });
-        const { valid, data } = await getLastYuriBgmByDate(dateString);
+        const { valid, data } = await getLastYuriBgmByDate(dateString, fetchType);
         if (valid) {
           set({ currentBGMList: data });
         }

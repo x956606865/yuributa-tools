@@ -78,6 +78,7 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
       fields: [],
       customFields: [],
       fetcherName: 'bgmV1',
+      fetchType: 'manga',
     },
   });
   const fetcherMapping = useMemo(
@@ -143,6 +144,21 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
           <Radio disabled value="yurizukan" label="百合图鉴 (开发中)" />
         </Group>
       </Radio.Group>
+      {form.values.fetcherName === 'bgmV1' && (
+        <Radio.Group
+          mt={20}
+          name="fetchType"
+          label="选择作品类型"
+          withAsterisk
+          {...form.getInputProps('fetchType')}
+        >
+          <Group mt="xs">
+            <Radio value="manga" label="漫画" />
+            <Radio value="bangumi" label="番剧" />
+            {/* <Radio disabled value="yurizukan" label="百合图鉴 (开发中)" /> */}
+          </Group>
+        </Radio.Group>
+      )}
       {form.values.fields.map((item: any, index) => (
         <Group align="flex-end" key={item.key}>
           <Select
@@ -282,6 +298,7 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
               presetName: form.values.presetName,
               selectedDBId,
               fetcher: form.values.fetcherName,
+              fetchType: form.values.fetchType,
             })
           }
         >

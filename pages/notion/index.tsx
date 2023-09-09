@@ -18,7 +18,7 @@ import {
 import CheckToken from './components/CheckToken/CheckToken';
 import SelectDBAndOperator from './components/SelectDBAndOperator/SelectDBAndOperator';
 import PresetManage from './components/PresetManage/PresetManage';
-import FetchNew from './components/FetchNew/FetchNew';
+import FetchBGMV1New from './components/FetchNew/FetchBGMV1New';
 import { useBGMStore } from '~/stores/bgm.store';
 import { useNotionStore } from '~/stores/notion.store';
 
@@ -150,7 +150,7 @@ export default function NotionHomePage() {
             />
           )}
           {stepName === 'startFetch' && (
-            <FetchNew
+            <FetchBGMV1New
               onSave={async (selectedData) => {
                 const mapping = getFetcherMappingByName(selectedPreset.fetcher);
                 const nameMapping = mapping.find((m: any) => m.keyProp === 'name');
@@ -214,6 +214,7 @@ export default function NotionHomePage() {
                 });
               }}
               dateString={form.values.dateFrom}
+              fetchType={selectedPreset.fetchType}
             />
           )}
         </Container>

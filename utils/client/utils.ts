@@ -29,8 +29,12 @@ export async function checkToken(token: string | undefined) {
   };
 }
 
-export async function getLastYuriBgmByDate(dateString: string) {
+export async function getLastYuriBgmByDate(dateString: string, fetchType: string) {
   const myHeaders = new Headers();
+  const typeMap: Record<string, number> = {
+    manga: 1,
+    bangumi: 2,
+  };
   myHeaders.append('User-Agent', 'Apifox/1.0.0 (https://apifox.com)');
   myHeaders.append('Content-Type', 'application/json');
   let startDate = null;
@@ -54,7 +58,7 @@ export async function getLastYuriBgmByDate(dateString: string) {
     keyword: '',
     sort: 'rank',
     filter: {
-      type: [1],
+      type: [typeMap[fetchType]],
       air_date: [`>=${startDate}`],
       tag: ['百合'],
     },
