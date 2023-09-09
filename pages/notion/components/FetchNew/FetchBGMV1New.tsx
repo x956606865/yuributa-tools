@@ -39,6 +39,7 @@ export default function FetchBGMV1New({ dateString, onSave, fetchType }: FetchNe
   const [data, setData] = useState<any>([]);
   const [selectedData, setSelectedData] = useState<any>([]);
   const selectedPreset = useNotionStore((store: any) => store.selectedPreset);
+  const isSavingToPage = useNotionStore((store: any) => store.isSavingToPage);
   useEffect(() => {
     if (typeof dateString === 'string') {
       // fetchBGMListByDate(dateString, fetchType);
@@ -72,6 +73,7 @@ export default function FetchBGMV1New({ dateString, onSave, fetchType }: FetchNe
       <LoadingOverlay visible={isFetchingBGMList} />
       <Group>
         <Button
+          disabled={isSavingToPage || isFetchingBGMList}
           size="xs"
           onClick={() => {
             setSelectedData(data.map((i: any) => i.name));
@@ -80,6 +82,7 @@ export default function FetchBGMV1New({ dateString, onSave, fetchType }: FetchNe
           全选
         </Button>
         <Button
+          disabled={isSavingToPage || isFetchingBGMList}
           size="xs"
           onClick={() => {
             setSelectedData([]);
@@ -89,6 +92,7 @@ export default function FetchBGMV1New({ dateString, onSave, fetchType }: FetchNe
           取消选择
         </Button>
         <Button
+          disabled={isSavingToPage || isFetchingBGMList}
           size="xs"
           onClick={() => {
             onSave(selectedData);

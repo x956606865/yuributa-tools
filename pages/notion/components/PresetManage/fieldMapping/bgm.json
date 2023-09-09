@@ -40,6 +40,11 @@
     "disPlayName": "评分"
   },
   {
+    "fieldName": "nsfw",
+    "type": "boolean",
+    "disPlayName": "NSFW"
+  },
+  {
     "fieldName": "id",
     "type": "string",
     "disPlayName": "BGM ID",
@@ -49,5 +54,19 @@
     "fieldName": "URL",
     "type": "bgmURL",
     "disPlayName": "BGM 链接"
+  },
+  {
+    "fieldName": "TV",
+    "type": "string",
+    "disPlayName": "播放电视台(仅番剧)",
+    "infoBoxKey": "播放电视台",
+    "infoBoxProcessType": "string"
+  },
+  {
+    "fieldName": "official_site",
+    "type": "string",
+    "disPlayName": "官方网站(仅番剧)",
+    "infoBoxKey": "官方网站",
+    "infoBoxProcessType": "string"
   }
 ]

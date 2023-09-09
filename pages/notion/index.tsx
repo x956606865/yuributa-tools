@@ -32,6 +32,7 @@ export default function NotionHomePage() {
   const selectedPreset = useNotionStore((store: any) => store.selectedPreset);
   const setToken = useNotionStore((store: any) => store.setNotionToken);
   const token = useNotionStore((store: any) => store.token);
+  const saveToNotion = useNotionStore((store: any) => store.saveToNotion);
 
   const [localToken, setLocalToken] = useLocalStorage<string | undefined>({
     key: 'yuri-tool-notion-token',
@@ -152,66 +153,7 @@ export default function NotionHomePage() {
           {stepName === 'startFetch' && (
             <FetchBGMV1New
               onSave={async (selectedData) => {
-                const mapping = getFetcherMappingByName(selectedPreset.fetcher);
-                const nameMapping = mapping.find((m: any) => m.keyProp === 'name');
-                const originData = currentBGMList.filter((d: any) =>
-                  selectedData.includes(d[nameMapping.fieldName])
-                );
-                // console.log(
-                //   '%c [ originData ]-138',
-                //   'font-size:13px; background:pink; color:#bf2c9f;',
-                //   originData
-                // );
-                const waitingList = convertDataToNotion({
-                  dataList: originData,
-                  preset: selectedPreset,
-                });
-                // console.log(
-                //   '%c [ test ]-150',
-                //   'font-size:13px; background:pink; color:#bf2c9f;',
-                //   waitingList
-                // );
-                let currentNum = 0;
-                notifications.show({
-                  id: 'upload-notion-page-progress',
-                  title: '开始导入...',
-                  message: `当前进度${currentNum}/${waitingList.length}`,
-                  withCloseButton: true,
-                  loading: true,
-                  autoClose: false,
-                });
-                for (const item of waitingList) {
-                  const result = await createNotionPage(token, item);
-                  const title = item.properties?.title?.title?.[0]?.plain_text;
-                  if (result.valid) {
-                    notifications.show({
-                      color: 'green',
-                      title: '导入成功！',
-                      message: `成功导入${title || 'unknown'}`,
-                      withCloseButton: true,
-                      autoClose: 2000,
-                    });
-                  } else {
-                    notifications.show({
-                      color: 'red',
-                      title: '导入失败！',
-                      message: `${title || 'unknown'}导入失败`,
-                      withCloseButton: true,
-                      autoClose: 2000,
-                    });
-                  }
-                  currentNum += 1;
-                  notifications.update({
-                    id: 'upload-notion-page-progress',
-                    message: `当前进度${currentNum}/${waitingList.length}`,
-                  });
-                }
-                notifications.update({
-                  color: 'green',
-                  id: 'upload-notion-page-progress',
-                  message: '全部导入完成',
-                  autoClose: 2000,
-                });
+                await saveToNotion({ selectedData, currentBGMList });
               }}
               dateString={form.values.dateFrom}
               fetchType={selectedPreset.fetchType}

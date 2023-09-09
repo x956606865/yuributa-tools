@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { toNumber } from 'lodash';
 import moment from 'moment';
 import BGMMappingV1 from '~/pages/notion/components/PresetManage/fieldMapping/bgm.json';
@@ -90,6 +91,35 @@ export async function getLastYuriBgmByDate(
     valid: false,
     error: jsonData.error,
   };
+}
+export async function fetchBGMDetailsByIds(ids: number[]) {
+  const myHeaders = new Headers();
+  const results = [];
+  myHeaders.append('User-Agent', 'Apifox/1.0.0 (https://apifox.com)');
+  myHeaders.append('Content-Type', 'application/json');
+
+  const requestOptions = {
+    method: 'GET',
+    headers: myHeaders,
+  };
+  for (const id of ids) {
+    const result = await fetch(`https://api.bgm.tv/v0/subjects/${id}`, requestOptions);
+    const jsonData = await result.json();
+    if (result.status === 200) {
+      results.push({
+        valid: true,
+        data: jsonData,
+        error: null,
+        id,
+      });
+    } else {
+      results.push({
+        valid: false,
+        id,
+      });
+    }
+  }
+  return results;
 }
 export async function getDatabaseList(token: string | undefined) {
   const result = await fetch('/api/notion/databases', {
@@ -273,10 +303,27 @@ const bgmURL_to_title = (_: any, extra: any) => string_to_title(extra.BGM_URL);
 const bgmURL_to_select = (_: any, extra: any) => string_to_select(extra.BGM_URL);
 const bgmURL_to_url = (_: any, extra: any) => string_to_url(extra.BGM_URL);
 
+const boolean_to_checkbox = (b: boolean) => ({
+  checkbox: b,
+});
+const boolean_to_number = (b: boolean) => number_to_number(b ? 1 : 0);
+const boolean_to_rich_text = (b: boolean) => string_to_rich_text(b ? 'TRUE' : 'FALSE');
+
 export function convertTypeToNotion(data: any, type: string, notionType: string, extra = {}) {
   const converterName = `${type}_to_${notionType}`;
   const invalidConverter = () => null;
   const converterMap: any = {
+    boolean_to_checkbox,
+    boolean_to_date: invalidConverter,
+    boolean_to_files: invalidConverter,
+    boolean_to_multi_select: invalidConverter,
+    boolean_to_number,
+    boolean_to_rich_text,
+    boolean_to_title: invalidConverter,
+    boolean_to_select: invalidConverter,
+    boolean_to_url: invalidConverter,
+    boolean_to_cover: invalidConverter,
+
     string_to_checkbox: invalidConverter,
     string_to_date,
     string_to_files,
@@ -336,7 +383,32 @@ export function convertTypeToNotion(data: any, type: string, notionType: string,
   }
   return null;
 }
-export function convertDataToNotion({ dataList, preset }: any) {
+function processInfoBoxValueByType(value: string, type = 'string', extra = {}) {
+  switch (type) {
+    case 'string':
+      return value.trim();
+    default:
+      return null;
+  }
+}
+function getDataFromInfoBox(infoBox: any[], key: string, extra: any = {}) {
+  const { mappingValue } = extra;
+  const target = infoBox.find((item: any) => item.key === key);
+  if (!target) {
+    return null;
+  }
+  const targetMappingValue = mappingValue;
+  if (!targetMappingValue) {
+    return null;
+  }
+  const valueOrigin = target.value;
+  const handledValue = processInfoBoxValueByType(
+    valueOrigin,
+    targetMappingValue.infoBoxProcessType
+  );
+  return handledValue;
+}
+export function convertDataToNotion({ dataList, preset, detailData }: any) {
   const mapping = fetcherMapping[preset.fetcher];
   const notionMapping = preset.mapping;
   return dataList.map((d: any) => {
@@ -350,22 +422,43 @@ export function convertDataToNotion({ dataList, preset }: any) {
       },
     };
     const bgmIDMapping = mapping.find((m: any) => m.keyProp === 'bgm_id');
+    const bgmID = d?.[bgmIDMapping?.fieldName];
+    const detail = detailData.find((dd) => dd.id === bgmID && dd.valid);
 
-    const BGM_URL = `https://bgm.tv/subject/${d?.[bgmIDMapping?.fieldName]}`;
+    const detailResult: any = {};
+    if (detail) {
+      detailResult.nsfw = detail.data.nsfw;
+      const infoBoxFields = mapping.filter((m: any) => typeof m.infoBoxKey === 'string');
+      infoBoxFields.forEach((infoBoxField: any) => {
+        const infoBoxValue = getDataFromInfoBox(detail.data.infobox, infoBoxField.infoBoxKey, {
+          mappingValue: infoBoxField,
+        });
+        if (infoBoxValue !== null) {
+          detailResult[infoBoxField.fieldName] = infoBoxValue;
+        }
+      });
+    }
+    const BGM_URL = `https://bgm.tv/subject/${bgmID}`;
 
     Object.values(notionMapping).forEach((nm: any) => {
       const targetMapping = mapping.find((m: any) => m.fieldName === nm.fromFieldName);
+      const combinedData = {
+        ...d,
+        ...detailResult,
+      };
+      const data = combinedData[targetMapping.fieldName];
 
-      const data = d[targetMapping.fieldName];
       const dataType = targetMapping.type;
-      const r = convertTypeToNotion(data, dataType, nm.notionType, {
-        ...targetMapping,
-        BGM_URL,
-      });
-      if (nm.notionType === 'cover') {
-        result.cover = r;
-      } else {
-        result.properties[nm.notionFieldId] = r;
+      if (data !== undefined) {
+        const r = convertTypeToNotion(data, dataType, nm.notionType, {
+          ...targetMapping,
+          BGM_URL,
+        });
+        if (nm.notionType === 'cover') {
+          result.cover = r;
+        } else {
+          result.properties[nm.notionFieldId] = r;
+        }
       }
     });
     return result;
