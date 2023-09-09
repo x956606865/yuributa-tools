@@ -29,7 +29,11 @@ export async function checkToken(token: string | undefined) {
   };
 }
 
-export async function getLastYuriBgmByDate(dateString: string, fetchType: string) {
+export async function getLastYuriBgmByDate(
+  dateString: string,
+  fetchType: string,
+  { current = 1, pageSize = 30 }: any
+) {
   const myHeaders = new Headers();
   const typeMap: Record<string, number> = {
     manga: 1,
@@ -71,14 +75,14 @@ export async function getLastYuriBgmByDate(dateString: string, fetchType: string
   };
 
   const result = await fetch(
-    'https://api.bgm.tv/v0/search/subjects?limit=100&offset=0',
+    `https://api.bgm.tv/v0/search/subjects?limit=${pageSize}&offset=${(current - 1) * pageSize}`,
     requestOptions
   );
   const jsonData = await result.json();
   if (result.status === 200) {
     return {
       valid: true,
-      data: jsonData.data,
+      data: jsonData,
       error: null,
     };
   }

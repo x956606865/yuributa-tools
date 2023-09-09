@@ -4,6 +4,7 @@ import {
   Group,
   Image,
   LoadingOverlay,
+  Pagination,
   SimpleGrid,
   Text,
   Tooltip,
@@ -33,15 +34,22 @@ export default function FetchBGMV1New({ dateString, onSave, fetchType }: FetchNe
   const fetchBGMListByDate = useBGMStore((store: any) => store.fetchBGMListByDate);
   const isFetchingBGMList = useBGMStore((store: any) => store.isFetchingBGMList);
   const currentBGMList = useBGMStore((store: any) => store.currentBGMList);
+  const pageInfo = useBGMStore((store: any) => store.pageInfo);
+  const setPage = useBGMStore((store: any) => store.setPage);
   const [data, setData] = useState<any>([]);
   const [selectedData, setSelectedData] = useState<any>([]);
   const selectedPreset = useNotionStore((store: any) => store.selectedPreset);
-
   useEffect(() => {
     if (typeof dateString === 'string') {
-      fetchBGMListByDate(dateString, fetchType);
+      // fetchBGMListByDate(dateString, fetchType);
+      setPage(1);
     }
   }, [dateString, fetchType]);
+  useEffect(() => {
+    if (typeof dateString === 'string') {
+      fetchBGMListByDate(dateString, fetchType, pageInfo.current);
+    }
+  }, [pageInfo.current]);
   useEffect(() => {
     // console.log(
     //   '%c [ currentBGMList ]-73',
@@ -130,6 +138,8 @@ export default function FetchBGMV1New({ dateString, onSave, fetchType }: FetchNe
           );
         })}
       </SimpleGrid>
+      {}
+      <Pagination mt={20} value={pageInfo.current} onChange={setPage} total={pageInfo.total} />
     </div>
   );
 }
