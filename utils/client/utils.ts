@@ -423,7 +423,7 @@ export function convertDataToNotion({ dataList, preset, detailData }: any) {
     };
     const bgmIDMapping = mapping.find((m: any) => m.keyProp === 'bgm_id');
     const bgmID = d?.[bgmIDMapping?.fieldName];
-    const detail = detailData.find((dd) => dd.id === bgmID && dd.valid);
+    const detail = detailData.find((dd: any) => dd.id === bgmID && dd.valid);
 
     const detailResult: any = {};
     if (detail) {
