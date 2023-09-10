@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 import { toNumber } from 'lodash';
 import moment from 'moment';
@@ -361,9 +362,10 @@ export function convertTypeToNotion(data: any, type: string, notionType: string,
     arrayString_to_files: invalidConverter,
     arrayString_to_multi_select,
     arrayString_to_number: invalidConverter,
-    arrayString_to_rich_text: invalidConverter,
+    arrayString_to_rich_text: (arrayString: string[]) =>
+      string_to_rich_text(arrayString.join(', ')),
     arrayString_to_title: invalidConverter,
-    arrayString_to_select: invalidConverter,
+    arrayString_to_select: (arrayString: string[]) => string_to_select(arrayString.join(', ')),
     arrayString_to_url: invalidConverter,
     arrayString_to_cover: invalidConverter,
 
@@ -383,10 +385,67 @@ export function convertTypeToNotion(data: any, type: string, notionType: string,
   }
   return null;
 }
-function processInfoBoxValueByType(value: string, type = 'string', extra = {}) {
+function processUntrustedDateString(dateString: string): string | null {
+  if (typeof dateString !== 'string') {
+    return null;
+  }
+  // 移除非法字符
+  const newDateString = dateString.replace(/[^0-9\-\/年月日]/g, '');
+  if (newDateString.length === 0) {
+    return null;
+  }
+  if (newDateString.includes('年')) {
+    const parsedDate = moment(newDateString, 'YYYY年MM月DD日');
+    if (parsedDate.isValid()) {
+      return parsedDate.format('YYYY-MM-DD');
+    }
+    return null;
+  }
+  const parsedDate = moment(newDateString);
+  if (parsedDate.isValid()) {
+    return parsedDate.format('YYYY-MM-DD');
+  }
+  return null;
+}
+function processUntrustedArrayString(arrayString: string): string[] | null {
+  if (typeof arrayString !== 'string') {
+    return null;
+  }
+  const splitSymbols = ['，', '、', '/'];
+  for (const symbol of splitSymbols) {
+    if (arrayString.includes(symbol)) {
+      return arrayString.split(symbol).map((item: string) => item.trim());
+    }
+  }
+
+  return [arrayString.trim()];
+}
+function processUntrustedArrayObject(arrayObject: any[]): string[] | null {
+  if (!Array.isArray(arrayObject)) {
+    return null;
+  }
+  const r: string[] = [];
+  arrayObject.forEach((v) => {
+    if (typeof v?.v === 'string' && v?.v?.trim?.()?.length > 0) {
+      r.push(v.v.trim());
+    }
+  });
+
+  return r;
+}
+function processInfoBoxValueByType(value: any, type = 'string', extra = {}) {
+  // if (typeof value !== 'string') {
+  //   return null;
+  // }
   switch (type) {
     case 'string':
       return value.trim();
+    case 'arrayString':
+      return processUntrustedArrayString(value.trim());
+    case 'dateString':
+      return processUntrustedDateString(value.trim());
+    case 'infoBoxArrayObject':
+      return processUntrustedArrayObject(value);
     default:
       return null;
   }
