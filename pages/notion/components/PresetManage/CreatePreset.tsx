@@ -167,7 +167,7 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
             data={fetcherMapping.map((fm: any) => ({
               value: fm.fieldName,
               label: fm.disPlayName,
-              group: typeof fm.infoBoxKey === 'string' ? '实验性采集数据' : '基础属性',
+              group: typeof fm.group === 'string' && fm.group,
             }))}
             //   value={selectedPreset?.id}
             //   onChange={(value: any) => {

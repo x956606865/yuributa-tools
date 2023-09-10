@@ -2,71 +2,195 @@
   {
     "fieldName": "date",
     "type": "string",
-    "disPlayName": "date"
+    "disPlayName": "date",
+    "group": "基础数据"
   },
   {
     "fieldName": "image",
     "type": "string",
     "disPlayName": "封面",
-    "keyProp": "cover"
+    "keyProp": "cover",
+    "group": "基础数据"
   },
   {
     "fieldName": "summary",
     "type": "string",
     "disPlayName": "简介",
-    "keyProp": "summary"
+    "keyProp": "summary",
+    "group": "基础数据"
   },
   {
     "fieldName": "name",
     "type": "string",
     "disPlayName": "原名",
-    "keyProp": "name"
+    "keyProp": "name",
+    "group": "基础数据"
   },
   {
     "fieldName": "name_cn",
     "type": "string",
     "disPlayName": "中文名",
-    "keyProp": "name_cn"
+    "keyProp": "name_cn",
+    "group": "基础数据"
   },
   {
     "fieldName": "tags",
     "type": "arrayObject",
     "disPlayName": "标签",
-    "keyName": "name"
+    "keyName": "name",
+    "group": "基础数据"
   },
   {
     "fieldName": "score",
     "type": "number",
-    "disPlayName": "评分"
+    "disPlayName": "评分",
+    "group": "基础数据"
   },
   {
     "fieldName": "nsfw",
     "type": "boolean",
-    "disPlayName": "NSFW"
+    "disPlayName": "NSFW",
+    "group": "基础数据"
   },
   {
     "fieldName": "id",
     "type": "string",
     "disPlayName": "BGM ID",
-    "keyProp": "bgm_id"
+    "keyProp": "bgm_id",
+    "group": "基础数据"
   },
   {
     "fieldName": "URL",
     "type": "bgmURL",
-    "disPlayName": "BGM 链接"
+    "disPlayName": "BGM 链接",
+    "group": "基础数据"
   },
   {
     "fieldName": "TV",
-    "type": "string",
+    "type": "arrayString",
     "disPlayName": "播放电视台(仅番剧)",
     "infoBoxKey": "播放电视台",
-    "infoBoxProcessType": "string"
+    "infoBoxProcessType": "arrayString",
+    "group": "实验性采集数据（番剧）"
   },
   {
     "fieldName": "official_site",
     "type": "string",
     "disPlayName": "官方网站(仅番剧)",
     "infoBoxKey": "官方网站",
-    "infoBoxProcessType": "string"
+    "infoBoxProcessType": "string",
+    "group": "实验性采集数据（番剧）"
+  },
+  {
+    "fieldName": "bangumi_ep_number",
+    "type": "string",
+    "disPlayName": "话数(仅番剧)",
+    "infoBoxKey": "话数",
+    "infoBoxProcessType": "string",
+    "group": "实验性采集数据（番剧）"
+  },
+  {
+    "fieldName": "bangumi_produce_company",
+    "type": "string",
+    "disPlayName": "动画制作(仅番剧)",
+    "infoBoxKey": "动画制作",
+    "infoBoxProcessType": "string",
+    "group": "实验性采集数据（番剧）"
+  },
+  {
+    "fieldName": "bangumi_directer",
+    "type": "string",
+    "disPlayName": "导演(仅番剧)",
+    "infoBoxKey": "导演",
+    "infoBoxProcessType": "string",
+    "group": "实验性采集数据（番剧）"
+  },
+  {
+    "fieldName": "bangumi_art",
+    "type": "arrayString",
+    "disPlayName": "美术监督(仅番剧)",
+    "infoBoxKey": "美术监督",
+    "infoBoxProcessType": "arrayString",
+    "group": "实验性采集数据（番剧）"
+  },
+  {
+    "fieldName": "bangumi_start_date",
+    "type": "string",
+    "disPlayName": "放送开始(仅番剧)(测试中)",
+    "infoBoxKey": "放送开始",
+    "infoBoxProcessType": "dateString",
+    "group": "实验性采集数据（番剧）"
+  },
+  {
+    "fieldName": "bangumi_end_date",
+    "type": "string",
+    "disPlayName": "播放结束(仅番剧)(测试中)",
+    "infoBoxKey": "播放结束",
+    "infoBoxProcessType": "dateString",
+    "group": "实验性采集数据（番剧）"
+  },
+  {
+    "fieldName": "published_by",
+    "type": "arrayString",
+    "disPlayName": "出版社",
+    "infoBoxKey": "出版社",
+    "infoBoxProcessType": "arrayString",
+    "group": "实验性采集数据（纸质）"
+  },
+  {
+    "fieldName": "published_at",
+    "type": "arrayString",
+    "disPlayName": "连载杂志",
+    "infoBoxKey": "连载杂志",
+    "infoBoxProcessType": "arrayString",
+    "group": "实验性采集数据（纸质）"
+  },
+  {
+    "fieldName": "ISBN",
+    "type": "string",
+    "disPlayName": "ISBN",
+    "infoBoxKey": "ISBN",
+    "infoBoxProcessType": "string",
+    "group": "实验性采集数据（纸质）"
+  },
+  {
+    "fieldName": "author",
+    "type": "arrayString",
+    "disPlayName": "作者",
+    "infoBoxKey": "作者",
+    "infoBoxProcessType": "arrayString",
+    "group": "实验性采集数据（纸质）"
+  },
+  {
+    "fieldName": "published_date",
+    "type": "string",
+    "disPlayName": "发售日(测试中)",
+    "infoBoxKey": "发售日",
+    "infoBoxProcessType": "dateString",
+    "group": "实验性采集数据（纸质）"
+  },
+  {
+    "fieldName": "published_date",
+    "type": "string",
+    "disPlayName": "连载开始(测试中)",
+    "infoBoxKey": "连载开始",
+    "infoBoxProcessType": "dateString",
+    "group": "实验性采集数据（纸质）"
+  },
+  {
+    "fieldName": "published_date",
+    "type": "string",
+    "disPlayName": "连载结束(测试中)",
+    "infoBoxKey": "连载结束",
+    "infoBoxProcessType": "dateString",
+    "group": "实验性采集数据（纸质）"
+  },
+  {
+    "fieldName": "published_date",
+    "type": "arrayString",
+    "disPlayName": "别名",
+    "infoBoxKey": "别名",
+    "infoBoxProcessType": "infoBoxArrayObject",
+    "group": "基础数据"
   }
 ]
