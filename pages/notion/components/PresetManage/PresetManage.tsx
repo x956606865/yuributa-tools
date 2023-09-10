@@ -55,6 +55,7 @@ const genPreset = ({
       notionType: JSONInfo.type,
       notionName: JSONInfo.name,
       notionFieldId: JSONInfo.id,
+      bindEndDateFieldName: field.bindEndDateFieldName,
     };
   });
   customFields.forEach((field: any) => {

@@ -190,11 +190,21 @@ export function convertDataToStandard(data: any, fetcherName: string) {
     name_cn: item[name_cn.fieldName],
   }));
 }
-const string_to_date = (str: string) => ({
-  date: {
-    start: moment(str).format('YYYY-MM-DD'),
-  },
-});
+const string_to_date = (str: string, extra: any = {}) => {
+  if (extra.endDate && moment(extra.endDate).isValid()) {
+    return {
+      date: {
+        start: moment(str).format('YYYY-MM-DD'),
+        end: moment(extra.endDate).format('YYYY-MM-DD'),
+      },
+    };
+  }
+  return {
+    date: {
+      start: moment(str).format('YYYY-MM-DD'),
+    },
+  };
+};
 const string_to_files = (str: string) => ({
   files: [
     {
@@ -509,9 +519,15 @@ export function convertDataToNotion({ dataList, preset, detailData }: any) {
 
       const dataType = targetMapping.type;
       if (data !== undefined) {
+        let endDate = null;
+        if (nm.notionType === 'date' && typeof nm.bindEndDateFieldName === 'string') {
+          endDate = combinedData[nm.bindEndDateFieldName];
+        }
         const r = convertTypeToNotion(data, dataType, nm.notionType, {
           ...targetMapping,
           BGM_URL,
+          notionMapping: nm,
+          endDate,
         });
         if (nm.notionType === 'cover') {
           result.cover = r;

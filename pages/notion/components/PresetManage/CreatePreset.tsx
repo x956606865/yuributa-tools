@@ -207,6 +207,25 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
             //   }}
             {...form.getInputProps(`fields.${index}.notionFieldName`)}
           />
+          {(form.values.fields[index] as any)?.notionFieldName &&
+            JSON.parse((form.values.fields[index] as any)?.notionFieldName ?? '{}').type ===
+              'date' && (
+              <Select
+                mt={20}
+                label="请选择属性"
+                data={fetcherMapping.map((fm: any) => ({
+                  value: fm.fieldName,
+                  label: fm.disPlayName,
+                  group: typeof fm.group === 'string' && fm.group,
+                }))}
+                //   value={selectedPreset?.id}
+                //   onChange={(value: any) => {
+                //     const preset = localPreset.find((lp: any) => lp.id === value);
+                //     setSelectedPreset(preset);
+                //   }}
+                {...form.getInputProps(`fields.${index}.bindEndDateFieldName`)}
+              />
+            )}
           <Button
             color="red"
             size="xs"
