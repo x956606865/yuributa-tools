@@ -120,7 +120,7 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
         <Select
           mt={20}
           disabled={isLoadingDBList || currentNotionDBList.length === 0}
-          label="请选择要操作的数据库"
+          label={`请选择要操作的数据库${isLoadingDBList ? '(加载中……)' : ''}`}
           data={currentNotionDBList.map((db: any) => ({
             label: getNotionDBTitle(db),
             value: db.id,
