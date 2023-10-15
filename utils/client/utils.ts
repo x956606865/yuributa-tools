@@ -514,6 +514,7 @@ export function convertDataToNotion({ dataList, preset, detailData }: any) {
       const combinedData = {
         ...d,
         ...detailResult,
+        URL: BGM_URL,
       };
       const data = combinedData[targetMapping.fieldName];
 
