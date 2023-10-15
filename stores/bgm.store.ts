@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { getLastYuriBgmByDate } from '~/utils/client/utils';
+import { getLastYuriBgmByDate, getLastYuriBgmByDateRange } from '~/utils/client/utils';
 
 export const useBGMStore = create(
   devtools(
@@ -12,7 +12,7 @@ export const useBGMStore = create(
         total: 0,
       },
       isFetchingBGMList: false,
-      fetchBGMListByDate: async (dateString: string, fetchType: string, page = 1) => {
+      fetchBGMListByDate: async (dateString: string, fetchType: string, form: any, page = 1) => {
         const state: any = get();
         set({
           isFetchingBGMList: true,
@@ -22,10 +22,25 @@ export const useBGMStore = create(
             current: page,
           },
         });
-        const { valid, data } = await getLastYuriBgmByDate(dateString, fetchType, {
-          current: state.pageInfo.current,
-          pageSize: state.pageInfo.pageSize,
-        });
+
+        let valid = null;
+        let data = null;
+        if (dateString === 'custom') {
+          const r = await getLastYuriBgmByDateRange(form.values.dateRange, fetchType, {
+            current: state.pageInfo.current,
+            pageSize: state.pageInfo.pageSize,
+          });
+          valid = r.valid;
+          data = r.data;
+        } else {
+          const r = await getLastYuriBgmByDate(dateString, fetchType, {
+            current: state.pageInfo.current,
+            pageSize: state.pageInfo.pageSize,
+          });
+          valid = r.valid;
+          data = r.data;
+        }
+
         if (valid) {
           set({
             currentBGMList: data.data as any[],

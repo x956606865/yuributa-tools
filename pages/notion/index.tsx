@@ -94,6 +94,7 @@ export default function NotionHomePage() {
       authType: 'token',
       operatorName: 'fetchNew',
       dateFrom: 'lastMonth',
+      dateRange: [null, null],
     },
   });
   if (loadingState.testNotion) {
@@ -155,6 +156,7 @@ export default function NotionHomePage() {
               onSave={async (selectedData) => {
                 await saveToNotion({ selectedData, currentBGMList });
               }}
+              form={form}
               dateString={form.values.dateFrom}
               fetchType={selectedPreset.fetchType}
             />

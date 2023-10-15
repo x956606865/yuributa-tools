@@ -93,6 +93,59 @@ export async function getLastYuriBgmByDate(
     error: jsonData.error,
   };
 }
+export async function getLastYuriBgmByDateRange(
+  dateRange: string[] | null[],
+  fetchType: string,
+  { current = 1, pageSize = 30 }: any
+) {
+  const myHeaders = new Headers();
+  const typeMap: Record<string, number> = {
+    manga: 1,
+    bangumi: 2,
+  };
+  myHeaders.append('User-Agent', 'Apifox/1.0.0 (https://apifox.com)');
+  myHeaders.append('Content-Type', 'application/json');
+  const dateFilterArr = [];
+  if (dateRange[0]) {
+    dateFilterArr.push(`>=${moment(dateRange[0]).format('YYYY-MM-DD')}`);
+  }
+  if (dateRange[1]) {
+    dateFilterArr.push(`<=${moment(dateRange[1]).format('YYYY-MM-DD')}`);
+  }
+
+  const raw = JSON.stringify({
+    keyword: '',
+    sort: 'rank',
+    filter: {
+      type: [typeMap[fetchType]],
+      air_date: dateFilterArr,
+      tag: ['百合'],
+    },
+  });
+
+  const requestOptions = {
+    method: 'POST',
+    headers: myHeaders,
+    body: raw,
+  };
+
+  const result = await fetch(
+    `https://api.bgm.tv/v0/search/subjects?limit=${pageSize}&offset=${(current - 1) * pageSize}`,
+    requestOptions
+  );
+  const jsonData = await result.json();
+  if (result.status === 200) {
+    return {
+      valid: true,
+      data: jsonData,
+      error: null,
+    };
+  }
+  return {
+    valid: false,
+    error: jsonData.error,
+  };
+}
 export async function fetchBGMDetailsByIds(ids: number[]) {
   const myHeaders = new Headers();
   const results = [];

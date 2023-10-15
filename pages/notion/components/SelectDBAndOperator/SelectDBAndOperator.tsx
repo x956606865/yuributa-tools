@@ -1,4 +1,5 @@
 import { Group, Radio } from '@mantine/core';
+import { DatePicker } from '@mantine/dates';
 
 export default function SelectDBAndOperator({ form }: any) {
   //   console.log('%c [ token ]-23', 'font-size:13px; background:pink; color:#bf2c9f;', token);
@@ -69,9 +70,15 @@ export default function SelectDBAndOperator({ form }: any) {
             <Radio value="last3Month" label="最近三个月" />
             <Radio value="last6Month" label="最近半年" />
             <Radio value="last12Month" label="最近一年" />
+            <Radio value="custom" label="自定义" />
             {/* <Radio value="publicAuth" label="跳转认证" /> */}
           </Group>
         </Radio.Group>
+      )}
+      {form.values.dateFrom === 'custom' && (
+        <Group mt={15}>
+          <DatePicker type="range" {...form.getInputProps('dateRange')} />
+        </Group>
       )}
     </>
   );
