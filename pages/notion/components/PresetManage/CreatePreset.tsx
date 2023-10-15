@@ -87,7 +87,8 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
   );
   // console.log('%c [ form ]-74', 'font-size:13px; background:pink; color:#bf2c9f;', form.values);
   useEffect(() => {
-    const newSelectedNotionField: any = [...selectedNotionField];
+    const newSelectedNotionField: any = [];
+
     form.values.fields.forEach((f: any) => {
       try {
         const nd: any = JSON.parse(f.notionFieldName);
@@ -105,6 +106,7 @@ export default function CreatePreset({ onSave = () => {} }: CreatePresetProps) {
         //
       }
     });
+
     setSelectedNotionField(uniq(newSelectedNotionField));
   }, [form.values.fields, form.values.customFields]);
   useEffect(() => {
