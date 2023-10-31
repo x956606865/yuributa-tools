@@ -100,6 +100,9 @@ async function splitMangaList(
     leftCanvas.height = targetImgSize.height;
     rightCanvas.width = targetImgSize.width;
     rightCanvas.height = targetImgSize.height;
+    if (!Array.isArray(baseColor)) {
+      baseColor = [255, 255, 255];
+    }
     // 设置默认背景色
     leftCtx.fillStyle = `rgb(${baseColor.join(',')})`;
 
@@ -253,6 +256,9 @@ async function resizeMangaList(
     const imgWidth = imgObj.width - leftPadding - rightPadding;
     leftCanvas.width = targetImgSize.width;
     leftCanvas.height = targetImgSize.height;
+    if (!Array.isArray(baseColor)) {
+      baseColor = [255, 255, 255];
+    }
     // 设置默认背景色
     leftCtx.fillStyle = `rgb(${baseColor.join(',')})`;
 
