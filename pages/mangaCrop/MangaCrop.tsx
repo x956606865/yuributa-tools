@@ -481,6 +481,11 @@ const SizePreset: any = {
     height: 1680,
     label: 'BOOX Leaf2',
   },
+  booxX3: {
+    width: 1404,
+    height: 1872,
+    label: 'BOOX X3',
+  },
   default: {
     width: 1080,
     height: 1920,
