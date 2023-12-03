@@ -11,6 +11,7 @@ module.exports = withBundleAnalyzer({
   eslint: {
     ignoreDuringBuilds: true,
   },
+  swcMinify: false,
   // pageExtensions: ['tsx'],
   webpack: (config, { isServer }) => {
     // 配置添加支持.ejs文件的加载器
