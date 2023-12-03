@@ -2,6 +2,10 @@
 /* eslint-disable prefer-destructuring */
 /* eslint-disable no-plusplus */
 /* eslint-disable @typescript-eslint/no-shadow */
+import * as _Jimp from 'jimp';
+
+// @ts-ignore
+const Jimp = typeof self !== 'undefined' ? self.Jimp || _Jimp : _Jimp;
 
 import {
   Accordion,
@@ -42,6 +46,7 @@ import {
   checkImgInfo,
   getRandomSamples,
   loadImage,
+  readFile,
   saveCBZ,
   saveEpub,
 } from '~/utils/output.util';
@@ -56,7 +61,7 @@ async function checkPadding(type: string, img: any, { loggerHandler, form }: any
 async function splitMangaList(
   imgList: any,
   targetImgSize: any,
-  { loggerHandler, form, paddingResult, coverName }: any
+  { loggerHandler, form, coverName }: any
 ) {
   const promises = imgList.map(async (img: any, index: any) => {
     console.log(`process images ${index + 1}/${imgList.length}`);
@@ -66,154 +71,41 @@ async function splitMangaList(
         skip: true,
       };
     }
-    let leftPadding;
-    let rightPadding;
-    let middleWidth;
-    let baseColor;
-    if (
-      form.values.paddingCheckMethod === 'sample' ||
-      !form.values.isProcessPadding ||
-      !form.values.autoDetectPaddingWidth
-    ) {
-      ({ leftPadding, rightPadding, middleWidth, baseColor } = paddingResult);
-    } else {
-      ({ leftPadding, rightPadding, middleWidth, baseColor } = await checkPadding('double', img, {
-        form,
-        loggerHandler,
-      }));
-    }
-    loggerHandler.append(
-      `使用的padding为：${leftPadding},${rightPadding},${middleWidth},${baseColor}`
-    );
+    // let leftPadding;
+    // let rightPadding;
+    // let middleWidth;
+    // let baseColor = [255, 255, 255];
+    const i = await readFile(img);
 
-    // Load the image into an Image object
-    const imgObj: any = await loadImage(img);
-
-    // Split the image into two halves
-    const leftCanvas = document.createElement('canvas');
-    const rightCanvas = document.createElement('canvas');
-
-    const leftCtx: any = leftCanvas.getContext('2d');
-    const rightCtx: any = rightCanvas.getContext('2d');
-    const imgWidth = (imgObj.width - leftPadding - rightPadding - middleWidth) / 2;
-    leftCanvas.width = targetImgSize.width;
-    leftCanvas.height = targetImgSize.height;
-    rightCanvas.width = targetImgSize.width;
-    rightCanvas.height = targetImgSize.height;
-    if (!Array.isArray(baseColor)) {
-      baseColor = [255, 255, 255];
-    }
-    // 设置默认背景色
-    leftCtx.fillStyle = `rgb(${baseColor.join(',')})`;
-
-    // 填充整个 Canvas
-    leftCtx.fillRect(0, 0, leftCanvas.width, leftCanvas.height);
-    // 设置默认背景色
-    rightCtx.fillStyle = `rgb(${baseColor.join(',')})`;
-
-    // 填充整个 Canvas
-    rightCtx.fillRect(0, 0, rightCanvas.width, rightCanvas.height);
-    if (imgWidth > targetImgSize.width || imgObj.height > targetImgSize.height) {
-      // console.log('bigger');
-      const canvas = document.createElement('canvas');
-      const ctx: any = canvas.getContext('2d');
-      // 确定缩放比例
-      const scale = Math.min(targetImgSize.width / imgWidth, targetImgSize.height / imgObj.height);
-
-      // 根据缩放比例计算缩放后的图像尺寸
-      const scaledWidth = imgWidth * scale;
-      const scaledHeight = imgObj.height * scale;
-      loggerHandler.append(`scaledWidth:${scaledWidth},scaledHeight:${scaledHeight}`);
-      canvas.height = scaledHeight;
-      canvas.width = scaledWidth * 2;
-      // Draw the cropped image onto the canvas
-      ctx.drawImage(
-        imgObj,
-        leftPadding,
-        0,
-        imgWidth,
-        imgObj.height,
-        0,
-        0,
-        scaledWidth,
-        scaledHeight
-      );
-      ctx.drawImage(
-        imgObj,
-        leftPadding + imgWidth + middleWidth,
-        0,
-        imgWidth,
-        imgObj.height,
-        scaledWidth,
-        0,
-        scaledWidth,
-        scaledHeight
-      );
-      const newPadding = (targetImgSize.width - scaledWidth) / 2;
-      leftCtx.drawImage(
-        canvas,
-        0,
-        0,
-        scaledWidth,
-        scaledHeight,
-        newPadding,
-        0,
-        scaledWidth,
-        scaledHeight
-      );
-
-      rightCtx.drawImage(
-        canvas,
-        scaledWidth,
-        0,
-        scaledWidth,
-        scaledHeight,
-        newPadding,
-        0,
-        scaledWidth,
-        scaledHeight
-      );
-    } else {
-      // console.log('smaller');
-      // 确定缩放比例
-      const scale = Math.min(targetImgSize.width / imgWidth, targetImgSize.height / imgObj.height);
-
-      // 根据缩放比例计算缩放后的图像尺寸
-      const scaledWidth = imgWidth * scale;
-
-      const scaledHeight = imgObj.height * scale;
-
-      const newPadding = (targetImgSize.width - scaledWidth) / 2;
-
-      leftCtx.drawImage(
-        imgObj,
-        leftPadding,
-        0,
-        imgWidth,
-        imgObj.height,
-        newPadding,
-        (targetImgSize.height - scaledHeight) / 2,
-        scaledWidth,
-        scaledHeight
-      );
-
-      rightCtx.drawImage(
-        imgObj,
-        imgObj.width - rightPadding - imgWidth,
-        0,
-        imgWidth,
-        imgObj.height,
-        newPadding,
-        (targetImgSize.height - scaledHeight) / 2,
-        scaledWidth,
-        scaledHeight
-      );
-    }
+    const jimpData = (await Jimp.read(i)).autocrop({ cropOnlyFrames: false });
+    // const data = await jimpData.autocrop().quality(80).getBase64Async(Jimp.MIME_JPEG);
+    const left = await jimpData
+      .clone()
+      .crop(0, 0, jimpData.bitmap.width / 2, jimpData.bitmap.height)
+      .autocrop({ cropOnlyFrames: false })
+      // .contain(
+      //   targetImgSize.width,
+      //   targetImgSize.height,
+      //   Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_MIDDLE
+      // )
+      .quality(form.values.fileQuality)
+      .getBase64Async(Jimp.MIME_JPEG);
+    const right = await jimpData
+      .clone()
+      .crop(jimpData.bitmap.width / 2, 0, jimpData.bitmap.width / 2, jimpData.bitmap.height)
+      .autocrop({ cropOnlyFrames: false })
+      // .contain(
+      //   targetImgSize.width,
+      //   targetImgSize.height,
+      //   Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_MIDDLE
+      // )
+      .quality(form.values.fileQuality)
+      .getBase64Async(Jimp.MIME_JPEG);
 
     // Convert both canvases to base64 format and return them as an object
     return {
-      left: leftCanvas.toDataURL('image/jpeg', 0.8),
-      right: rightCanvas.toDataURL('image/jpeg', 0.8),
+      left,
+      right,
       name: img.name,
     };
   });
@@ -223,7 +115,7 @@ async function splitMangaList(
 async function resizeMangaList(
   imgList: any,
   targetImgSize: any,
-  { loggerHandler, form, paddingResult, coverName }: any
+  { loggerHandler, form, coverName }: any
 ) {
   const promises = imgList.map(async (img: any, index: any) => {
     console.log(`process images ${index + 1}/${imgList.length}`);
@@ -235,102 +127,114 @@ async function resizeMangaList(
     }
     let leftPadding;
     let rightPadding;
-    let baseColor;
-    if (form.values.paddingCheckMethod === 'sample') {
-      ({ leftPadding, rightPadding, baseColor } = paddingResult);
-    } else {
-      ({ leftPadding, rightPadding, baseColor } = await checkPadding('single', img, {
-        form,
-        loggerHandler,
-      }));
-    }
-    loggerHandler.append(`使用的padding为：${leftPadding},${rightPadding}`);
+    let baseColor = [255, 255, 255];
+    // if (form.values.paddingCheckMethod === 'sample') {
+    //   ({ leftPadding, rightPadding, baseColor } = paddingResult);
+    // } else {
+    //   ({ leftPadding, rightPadding, baseColor } = await checkPadding('single', img, {
+    //     form,
+    //     loggerHandler,
+    //   }));
+    // }
+    // loggerHandler.append(`使用的padding为：${leftPadding},${rightPadding}`);
+    const i = await readFile(img);
 
-    // Load the image into an Image object
-    const imgObj: any = await loadImage(img);
+    const jimpData = (await Jimp.read(i)).autocrop();
+    // const data = await jimpData.autocrop().quality(80).getBase64Async(Jimp.MIME_JPEG);
+    const left = await jimpData
+      .autocrop()
+      // .contain(
+      //   targetImgSize.width,
+      //   targetImgSize.height,
+      //   Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_MIDDLE
+      // )
+      .quality(form.values.fileQuality)
+      .getBase64Async(Jimp.MIME_JPEG);
+    // // Load the image into an Image object
+    // const imgObj: any = await loadImage(img);
 
-    // Split the image into two halves
-    const leftCanvas = document.createElement('canvas');
+    // // Split the image into two halves
+    // const leftCanvas = document.createElement('canvas');
 
-    const leftCtx: any = leftCanvas.getContext('2d');
-    const imgWidth = imgObj.width - leftPadding - rightPadding;
-    leftCanvas.width = targetImgSize.width;
-    leftCanvas.height = targetImgSize.height;
-    if (!Array.isArray(baseColor)) {
-      baseColor = [255, 255, 255];
-    }
+    // const leftCtx: any = leftCanvas.getContext('2d');
+    // const imgWidth = imgObj.width - leftPadding - rightPadding;
+    // leftCanvas.width = targetImgSize.width;
+    // leftCanvas.height = targetImgSize.height;
+    // if (!Array.isArray(baseColor)) {
+    //   baseColor = [255, 255, 255];
+    // }
     // 设置默认背景色
-    leftCtx.fillStyle = `rgb(${baseColor.join(',')})`;
+    // leftCtx.fillStyle = `rgb(${baseColor.join(',')})`;
 
     // 填充整个 Canvas
-    leftCtx.fillRect(0, 0, leftCanvas.width, leftCanvas.height);
+    // leftCtx.fillRect(0, 0, leftCanvas.width, leftCanvas.height);
 
-    if (imgWidth > targetImgSize.width || imgObj.height > targetImgSize.height) {
-      // console.log('bigger');
-      const canvas = document.createElement('canvas');
-      const ctx: any = canvas.getContext('2d');
-      // 确定缩放比例
-      const scale = Math.min(targetImgSize.width / imgWidth, targetImgSize.height / imgObj.height);
+    // if (imgWidth > targetImgSize.width || imgObj.height > targetImgSize.height) {
+    //   // console.log('bigger');
+    //   const canvas = document.createElement('canvas');
+    //   const ctx: any = canvas.getContext('2d');
+    //   // 确定缩放比例
+    //   const scale = Math.min(targetImgSize.width / imgWidth, targetImgSize.height / imgObj.height);
 
-      // 根据缩放比例计算缩放后的图像尺寸
-      const scaledWidth = imgWidth * scale;
-      const scaledHeight = imgObj.height * scale;
-      loggerHandler.append(`scaledWidth:${scaledWidth},scaledHeight:${scaledHeight}`);
-      canvas.height = scaledHeight;
-      canvas.width = scaledWidth * 2;
-      // Draw the cropped image onto the canvas
-      ctx.drawImage(
-        imgObj,
-        leftPadding,
-        0,
-        imgWidth,
-        imgObj.height,
-        0,
-        0,
-        scaledWidth,
-        scaledHeight
-      );
+    //   // 根据缩放比例计算缩放后的图像尺寸
+    //   const scaledWidth = imgWidth * scale;
+    //   const scaledHeight = imgObj.height * scale;
+    //   loggerHandler.append(`scaledWidth:${scaledWidth},scaledHeight:${scaledHeight}`);
+    //   canvas.height = scaledHeight;
+    //   canvas.width = scaledWidth * 2;
+    //   // Draw the cropped image onto the canvas
+    //   ctx.drawImage(
+    //     imgObj,
+    //     leftPadding,
+    //     0,
+    //     imgWidth,
+    //     imgObj.height,
+    //     0,
+    //     0,
+    //     scaledWidth,
+    //     scaledHeight
+    //   );
 
-      const newPadding = (targetImgSize.width - scaledWidth) / 2;
-      leftCtx.drawImage(
-        canvas,
-        0,
-        0,
-        scaledWidth,
-        scaledHeight,
-        newPadding,
-        0,
-        scaledWidth,
-        scaledHeight
-      );
-    } else {
-      // console.log('smaller');
-      // 确定缩放比例
-      const scale = Math.min(targetImgSize.width / imgWidth, targetImgSize.height / imgObj.height);
+    //   const newPadding = (targetImgSize.width - scaledWidth) / 2;
+    //   leftCtx.drawImage(
+    //     canvas,
+    //     0,
+    //     0,
+    //     scaledWidth,
+    //     scaledHeight,
+    //     newPadding,
+    //     0,
+    //     scaledWidth,
+    //     scaledHeight
+    //   );
+    // } else {
+    //   // console.log('smaller');
+    //   // 确定缩放比例
+    //   const scale = Math.min(targetImgSize.width / imgWidth, targetImgSize.height / imgObj.height);
 
-      // 根据缩放比例计算缩放后的图像尺寸
-      const scaledWidth = imgWidth * scale;
+    //   // 根据缩放比例计算缩放后的图像尺寸
+    //   const scaledWidth = imgWidth * scale;
 
-      const scaledHeight = imgObj.height * scale;
+    //   const scaledHeight = imgObj.height * scale;
 
-      const newPadding = (targetImgSize.width - scaledWidth) / 2;
+    //   const newPadding = (targetImgSize.width - scaledWidth) / 2;
 
-      leftCtx.drawImage(
-        imgObj,
-        leftPadding,
-        0,
-        imgWidth,
-        imgObj.height,
-        newPadding,
-        (targetImgSize.height - scaledHeight) / 2,
-        scaledWidth,
-        scaledHeight
-      );
-    }
+    //   leftCtx.drawImage(
+    //     imgObj,
+    //     leftPadding,
+    //     0,
+    //     imgWidth,
+    //     imgObj.height,
+    //     newPadding,
+    //     (targetImgSize.height - scaledHeight) / 2,
+    //     scaledWidth,
+    //     scaledHeight
+    //   );
+    // }
 
     // Convert both canvases to base64 format and return them as an object
     return {
-      file: leftCanvas.toDataURL('image/jpeg', 0.8),
+      file: left,
       name: img.name,
     };
   });
@@ -342,83 +246,87 @@ async function processImages2(
   targetImgSize: any,
   { loggerHandler, form, coverName }: any
 ) {
-  const checkMethod = form.values.paddingCheckMethod;
-  const paddingResult: any = {};
+  // const checkMethod = form.values.paddingCheckMethod;
+  // const paddingResult: any = {};
   if (imgList.length === 0) {
     return [];
   }
   if (form.values.extraProcess === 'none') {
     const promises = imgList.map(async (img: any) => {
-      const imgObj: any = await loadImage(img);
-      const canvas = document.createElement('canvas');
-      const ctx: any = canvas.getContext('2d');
-      const imgWidth = imgObj.width;
-      canvas.width = imgWidth;
-      canvas.height = imgObj.height;
-      ctx.drawImage(imgObj, 0, 0, imgWidth, imgObj.height, 0, 0, imgWidth, imgObj.height);
+      const imgObj = await readFile(img);
+      const jimpData = await Jimp.read(imgObj);
+      const data = await jimpData.quality(form.values.fileQuality).getBase64Async(Jimp.MIME_JPEG);
+
+      // const imgObj: any = await loadImage(img);
+      // const canvas = document.createElement('canvas');
+      // const ctx: any = canvas.getContext('2d');
+      // const imgWidth = imgObj.width;
+      // canvas.width = imgWidth;
+      // canvas.height = imgObj.height;
+      // ctx.drawImage(imgObj, 0, 0, imgWidth, imgObj.height, 0, 0, imgWidth, imgObj.height);
       if (img.name.includes('cover')) {
         return {
-          cover: canvas.toDataURL('image/jpeg', 0.8),
+          cover: data, //  canvas.toDataURL('image/jpeg', 0.8),
           name: img.name,
         };
       }
       return {
-        file: canvas.toDataURL('image/jpeg', 0.8),
+        file: data, // canvas.toDataURL('image/jpeg', 0.8),
         name: img.name,
       };
     });
     return Promise.all(promises);
   }
-  if (!form.values.isProcessPadding) {
-    paddingResult.leftPadding = 0;
-    paddingResult.rightPadding = 0;
-    paddingResult.middleWidth = 0;
-  } else if (!form.values.autoDetectPaddingWidth) {
-    paddingResult.leftPadding = form.values.customLeftPadding;
-    paddingResult.rightPadding = form.values.customRightPadding;
-    paddingResult.middleWidth = form.values.customMiddlePadding;
-    paddingResult.baseColor = '#fff';
-  } else if (checkMethod === 'sample') {
-    const sampleIndex = getRandomSamples(imgList);
+  // if (!form.values.isProcessPadding) {
+  //   paddingResult.leftPadding = 0;
+  //   paddingResult.rightPadding = 0;
+  //   paddingResult.middleWidth = 0;
+  // } else if (!form.values.autoDetectPaddingWidth) {
+  //   paddingResult.leftPadding = form.values.customLeftPadding;
+  //   paddingResult.rightPadding = form.values.customRightPadding;
+  //   paddingResult.middleWidth = form.values.customMiddlePadding;
+  //   paddingResult.baseColor = '#fff';
+  // } else if (checkMethod === 'sample') {
+  //   const sampleIndex = getRandomSamples(imgList);
 
-    const r: any = {
-      leftPadding: [],
-      rightPadding: [],
-      middleWidth: [],
-    };
-    // eslint-disable-next-line no-restricted-syntax
-    for (const i of sampleIndex) {
-      const img = imgList[i];
-      // eslint-disable-next-line no-await-in-loop
-      const { leftPadding, rightPadding, middleWidth, baseColor } = await checkPadding(
-        form.values.extraProcess === 'split' ? 'double' : 'split',
-        img,
-        {
-          loggerHandler,
-          form,
-        }
-      );
-      r.leftPadding.push(leftPadding);
-      r.rightPadding.push(rightPadding);
-      r.middleWidth.push(middleWidth);
-      paddingResult.baseColor = baseColor;
-    }
-    if (sampleIndex.length > 3) {
-      paddingResult.leftPadding = calcSample(r.leftPadding);
-      paddingResult.rightPadding = calcSample(r.rightPadding);
-      paddingResult.middleWidth = calcSample(r.middleWidth);
-    } else {
-      paddingResult.leftPadding = r.leftPadding[0];
-      paddingResult.rightPadding = r.rightPadding[0];
-      paddingResult.middleWidth = r.middleWidth[0];
-    }
-  }
+  //   const r: any = {
+  //     leftPadding: [],
+  //     rightPadding: [],
+  //     middleWidth: [],
+  //   };
+  //   // eslint-disable-next-line no-restricted-syntax
+  //   for (const i of sampleIndex) {
+  //     const img = imgList[i];
+  //     // eslint-disable-next-line no-await-in-loop
+  //     const { leftPadding, rightPadding, middleWidth, baseColor } = await checkPadding(
+  //       form.values.extraProcess === 'split' ? 'double' : 'split',
+  //       img,
+  //       {
+  //         loggerHandler,
+  //         form,
+  //       }
+  //     );
+  //     r.leftPadding.push(leftPadding);
+  //     r.rightPadding.push(rightPadding);
+  //     r.middleWidth.push(middleWidth);
+  //     paddingResult.baseColor = baseColor;
+  //   }
+  //   if (sampleIndex.length > 3) {
+  //     paddingResult.leftPadding = calcSample(r.leftPadding);
+  //     paddingResult.rightPadding = calcSample(r.rightPadding);
+  //     paddingResult.middleWidth = calcSample(r.middleWidth);
+  //   } else {
+  //     paddingResult.leftPadding = r.leftPadding[0];
+  //     paddingResult.rightPadding = r.rightPadding[0];
+  //     paddingResult.middleWidth = r.middleWidth[0];
+  //   }
+  // }
 
   if (form.values.extraProcess === 'resize') {
     return resizeMangaList(imgList, targetImgSize, {
       loggerHandler,
       form,
-      paddingResult,
+      // paddingResult,
       coverName,
     });
   }
@@ -426,41 +334,49 @@ async function processImages2(
     return splitMangaList(imgList, targetImgSize, {
       loggerHandler,
       form,
-      paddingResult,
+      // paddingResult,
       coverName,
     });
   }
   return [];
 }
 async function processCover(img: any, { form, loggerHandler }: any) {
-  const paddings = await checkPadding('single', img, {
-    form,
-    loggerHandler,
-  });
-  loggerHandler.append(`Cover 使用的padding为：${paddings.leftPadding},${paddings.rightPadding}`);
+  const i = await readFile(img);
 
-  const imgObj: any = await loadImage(img);
-  const canvas = document.createElement('canvas');
-  const ctx: any = canvas.getContext('2d');
-  const imgWidth = imgObj.width - paddings.leftPadding - paddings.rightPadding;
+  const jimpData = await Jimp.read(i);
+  const data = await jimpData
+    .autocrop({ cropOnlyFrames: false })
+    .quality(form.values.fileQuality)
+    .getBase64Async(Jimp.MIME_JPEG);
 
-  canvas.width = imgWidth;
+  // const paddings = await checkPadding('single', img, {
+  //   form,
+  //   loggerHandler,
+  // });
+  // loggerHandler.append(`Cover 使用的padding为：${paddings.leftPadding},${paddings.rightPadding}`);
 
-  canvas.height = imgObj.height;
+  // const imgObj: any = await loadImage(img);
+  // const canvas = document.createElement('canvas');
+  // const ctx: any = canvas.getContext('2d');
+  // const imgWidth = imgObj.width - paddings.leftPadding - paddings.rightPadding;
 
-  ctx.drawImage(
-    imgObj,
-    paddings.leftPadding,
-    0,
-    imgWidth,
-    imgObj.height,
-    0,
-    0,
-    imgWidth,
-    imgObj.height
-  );
+  // canvas.width = imgWidth;
+
+  // canvas.height = imgObj.height;
+
+  // ctx.drawImage(
+  //   imgObj,
+  //   paddings.leftPadding,
+  //   0,
+  //   imgWidth,
+  //   imgObj.height,
+  //   0,
+  //   0,
+  //   imgWidth,
+  //   imgObj.height
+  // );
   return {
-    cover: canvas.toDataURL('image/jpeg', 0.8),
+    cover: data, // canvas.toDataURL('image/jpeg', 0.8),
     name: img.name,
   };
 }
@@ -540,6 +456,7 @@ export default function HomePage() {
       name: 'unknown',
       author: 'unknown',
       allowNoise: 0.9,
+      fileQuality: 80,
       positionFix: {
         top: 0,
         left: 0,
@@ -915,7 +832,7 @@ export default function HomePage() {
                           {...form.getInputProps('readFrom')}
                         />
                       )}
-                      <Group mt={20}>
+                      {/* <Group mt={20}>
                         <Switch
                           label="裁剪padding"
                           name="isProcessPadding"
@@ -935,9 +852,9 @@ export default function HomePage() {
                             {...form.getInputProps('autoDetectPaddingWidth', { type: 'checkbox' })}
                           />
                         )}
-                      </Group>
+                      </Group> */}
 
-                      {!form.values.autoDetectPaddingColor && (
+                      {/* {!form.values.autoDetectPaddingColor && (
                         <Box mt={10}>
                           <Select
                             mt={10}
@@ -996,7 +913,7 @@ export default function HomePage() {
                           <Radio value="full" label="全量检测" />
                           <Radio value="sample" label="样本检测" />
                         </Group>
-                      </Radio.Group>
+                      </Radio.Group> */}
 
                       <Title mt={20} order={6}>
                         白色检测阈值
@@ -1047,6 +964,19 @@ export default function HomePage() {
                       </Group>
                     </Box>
                   )}
+                  <Title mt={20} order={6}>
+                    图片压缩质量
+                  </Title>
+
+                  <Slider
+                    labelAlwaysOn
+                    mt={10}
+                    label={form.values.fileQuality}
+                    min={0}
+                    max={100}
+                    name="fileQuality"
+                    {...form.getInputProps('fileQuality')}
+                  />
                   <Title mt={20} order={6}>
                     噪点容纳度
                   </Title>
