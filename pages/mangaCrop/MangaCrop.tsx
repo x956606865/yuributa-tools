@@ -37,7 +37,7 @@ import { IconArrowRightCircle, IconPhoto, IconUpload, IconX } from '@tabler/icon
 import { sortBy, uniqBy } from 'lodash';
 import { useEffect, useState } from 'react';
 import { base64ToImageUrl, checkImgInfo, readFile, saveCBZ, saveEpub } from '~/utils/output.util';
-import { manualProcess } from './manualProcess';
+import { manualProcess } from '../../utils/manualProcess';
 
 // @ts-ignore
 const Jimp = typeof self !== 'undefined' ? self.Jimp || _Jimp : _Jimp;
