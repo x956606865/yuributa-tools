@@ -2,10 +2,8 @@
 /* eslint-disable prefer-destructuring */
 /* eslint-disable no-plusplus */
 /* eslint-disable @typescript-eslint/no-shadow */
-import * as _Jimp from 'jimp';
-
 // @ts-ignore
-const Jimp = typeof self !== 'undefined' ? self.Jimp || _Jimp : _Jimp;
+import Jimp, * as _Jimp from 'jimp';
 
 import {
   Accordion,
@@ -25,7 +23,6 @@ import {
   Switch,
   Box,
   Slider,
-  Radio,
   LoadingOverlay,
   TextInput,
   NumberInput,
@@ -35,29 +32,82 @@ import {
 } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import { useForm } from '@mantine/form';
-import { useDisclosure, useListState } from '@mantine/hooks';
-import { IconPhoto, IconUpload, IconX } from '@tabler/icons';
+import { randomId, useDisclosure, useListState } from '@mantine/hooks';
+import { IconArrowRightCircle, IconPhoto, IconUpload, IconX } from '@tabler/icons';
 import { sortBy, uniqBy } from 'lodash';
-import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
-import {
-  base64ToImageUrl,
-  calcSample,
-  checkImgInfo,
-  getRandomSamples,
-  loadImage,
-  readFile,
-  saveCBZ,
-  saveEpub,
-} from '~/utils/output.util';
+import { base64ToImageUrl, checkImgInfo, readFile, saveCBZ, saveEpub } from '~/utils/output.util';
+import { manualProcess } from './manualProcess';
 
-async function checkPadding(type: string, img: any, { loggerHandler, form }: any) {
-  if (type === 'single') {
-    return checkImgInfo(img, { loggerHandler, form, isCheckMiddle: false });
-  }
-  return checkImgInfo(img, { loggerHandler, form, isCheckMiddle: true });
+// @ts-ignore
+const Jimp = typeof self !== 'undefined' ? self.Jimp || _Jimp : _Jimp;
+
+async function splitMangaManualList(imgList: any, { loggerHandler, form, coverName }: any) {
+  const promises = imgList.map(async (img: any, index: any) => {
+    console.log(`process images ${index + 1}/${imgList.length}`);
+    loggerHandler.append(`process images ${index}/${imgList.length}`);
+    if (img.name === coverName) {
+      return {
+        skip: true,
+      };
+    }
+    const i = await readFile(img);
+
+    const jimpData: Jimp = await Jimp.read(i); //.autocrop({ cropOnlyFrames: false });
+    const resultPromise = form.values.splitManualSteps.reduce(
+      async (prev: Promise<Jimp[]>, step: any, index: number) => {
+        const jimp = await prev;
+        const exInfo = form.values.splitManualSteps[index].exInfo;
+        const target = manualProcess[step?.processType];
+        if (typeof target?.process === 'function') {
+          return target.process(
+            jimp.map((j) => j.clone()),
+            exInfo
+          );
+        }
+        return jimp;
+      },
+      Promise.resolve([jimpData])
+    );
+
+    const result = await resultPromise;
+
+    const [leftImg, rightImg] = result;
+
+    // // const data = await jimpData.autocrop().quality(80).getBase64Async(Jimp.MIME_JPEG);
+    // const leftImg = await jimpData
+    //   .clone()
+    //   .crop(0, 0, jimpData.bitmap.width / 2, jimpData.bitmap.height)
+    //   .autocrop({ cropOnlyFrames: false, tolerance: 0.01 })
+    //   // .contain(
+    //   //   targetImgSize.width,
+    //   //   targetImgSize.height,
+    //   //   Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_MIDDLE
+    //   // )
+    //   .quality(form.values.fileQuality)
+    //   .getBase64Async(Jimp.MIME_JPEG);
+    // const rightImg = await jimpData
+    //   .clone()
+    //   .crop(jimpData.bitmap.width / 2, 0, jimpData.bitmap.width / 2, jimpData.bitmap.height)
+    //   .autocrop({ cropOnlyFrames: false })
+    //   // .contain(
+    //   //   targetImgSize.width,
+    //   //   targetImgSize.height,
+    //   //   Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_MIDDLE
+    //   // )
+    //   .quality(form.values.fileQuality)
+    //   .getBase64Async(Jimp.MIME_JPEG);
+
+    // // Convert both canvases to base64 format and return them as an object
+    return {
+      left: await leftImg?.quality(80).getBase64Async(Jimp.MIME_JPEG),
+      right: await rightImg?.quality(80).getBase64Async(Jimp.MIME_JPEG),
+      name: img.name,
+    };
+  });
+
+  return Promise.all(promises);
 }
-
 async function splitMangaList(
   imgList: any,
   targetImgSize: any,
@@ -71,18 +121,29 @@ async function splitMangaList(
         skip: true,
       };
     }
+    const { left, right, top, bottom } = form.values.positionFix;
+
     // let leftPadding;
     // let rightPadding;
     // let middleWidth;
     // let baseColor = [255, 255, 255];
     const i = await readFile(img);
 
-    const jimpData = (await Jimp.read(i)).autocrop({ cropOnlyFrames: false });
+    let jimpData = await Jimp.read(i); //.autocrop({ cropOnlyFrames: false });
+
+    if (left + right + top + bottom > 0) {
+      jimpData = jimpData.crop(
+        left,
+        top,
+        jimpData.bitmap.width - right,
+        jimpData.bitmap.height - bottom
+      );
+    }
     // const data = await jimpData.autocrop().quality(80).getBase64Async(Jimp.MIME_JPEG);
-    const left = await jimpData
+    const leftImg = await jimpData
       .clone()
       .crop(0, 0, jimpData.bitmap.width / 2, jimpData.bitmap.height)
-      .autocrop({ cropOnlyFrames: false })
+      .autocrop({ cropOnlyFrames: false, tolerance: 0.01 })
       // .contain(
       //   targetImgSize.width,
       //   targetImgSize.height,
@@ -90,7 +151,7 @@ async function splitMangaList(
       // )
       .quality(form.values.fileQuality)
       .getBase64Async(Jimp.MIME_JPEG);
-    const right = await jimpData
+    const rightImg = await jimpData
       .clone()
       .crop(jimpData.bitmap.width / 2, 0, jimpData.bitmap.width / 2, jimpData.bitmap.height)
       .autocrop({ cropOnlyFrames: false })
@@ -104,8 +165,8 @@ async function splitMangaList(
 
     // Convert both canvases to base64 format and return them as an object
     return {
-      left,
-      right,
+      left: leftImg,
+      right: rightImg,
       name: img.name,
     };
   });
@@ -125,9 +186,6 @@ async function resizeMangaList(
         skip: true,
       };
     }
-    let leftPadding;
-    let rightPadding;
-    let baseColor = [255, 255, 255];
     // if (form.values.paddingCheckMethod === 'sample') {
     //   ({ leftPadding, rightPadding, baseColor } = paddingResult);
     // } else {
@@ -338,9 +396,17 @@ async function processImages2(
       coverName,
     });
   }
+  if (form.values.extraProcess === 'splitManual') {
+    return splitMangaManualList(imgList, {
+      loggerHandler,
+      form,
+      // paddingResult,
+      coverName,
+    });
+  }
   return [];
 }
-async function processCover(img: any, { form, loggerHandler }: any) {
+async function processCover(img: any, { form }: any) {
   const i = await readFile(img);
 
   const jimpData = await Jimp.read(i);
@@ -415,9 +481,11 @@ const SizePreset: any = {
 };
 const ProcessType: any = {
   none: '无',
-  split: '漫画拆分',
+  split: '漫画拆分(自动)',
+  splitManual: '漫画处理(手动)',
   resize: '漫画Resize',
 };
+
 export default function HomePage() {
   const theme = useMantineTheme();
   const [fileList, fileListHandler] = useListState<any>([]);
@@ -428,8 +496,10 @@ export default function HomePage() {
   const [previewList, setPreviewList] = useState<any>([]);
   const [globalLoading, setGlobalLoading] = useState<boolean>(false);
   const [ImageViewModalOpened, ImageViewModal] = useDisclosure(false);
+  const [ImageProcessOptionsModalOpened, ImageProcessOptionsModal] = useDisclosure(false);
   const [previewImage, setPreviewImage] = useState<any>(null);
   const [isLoadingPreviewImage, setIsLoadingPreviewImage] = useState(false);
+  const [currentProcessModalInfo, setCurrentProcessModalInfo] = useState<any>(null);
   const form = useForm({
     initialValues: {
       imgType: 'image/jpeg',
@@ -444,7 +514,7 @@ export default function HomePage() {
       customLeftPadding: 0,
       customRightPadding: 0,
       customMiddlePadding: 0,
-      volume: 0,
+      volume: 1,
       customFileName: false,
       paddingColor: 'white',
       middlePaddingColor: 'white',
@@ -453,8 +523,8 @@ export default function HomePage() {
       paddingCheckMethod: 'sample',
       outputType: 'epub',
       fileName: 'images',
-      name: 'unknown',
-      author: 'unknown',
+      name: '',
+      author: '',
       allowNoise: 0.9,
       fileQuality: 80,
       positionFix: {
@@ -463,8 +533,13 @@ export default function HomePage() {
         right: 0,
         bottom: 0,
       },
+      splitManualSteps: [],
+      currentSelectedProcessName: '',
     },
   });
+  useEffect(() => {
+    console.log(form.values.splitManualSteps);
+  }, [form.values.splitManualSteps]);
   const doProcess = async () => {
     setGlobalLoading(true);
 
@@ -551,6 +626,89 @@ export default function HomePage() {
   return (
     <>
       <Modal
+        size={500}
+        opened={ImageProcessOptionsModalOpened}
+        onClose={() => {
+          ImageProcessOptionsModal.close();
+        }}
+        withCloseButton
+        title="图像处理选项"
+      >
+        <Center>
+          {manualProcess[currentProcessModalInfo?.processName]?.optionRender &&
+            manualProcess[currentProcessModalInfo?.processName]?.optionRender(
+              currentProcessModalInfo,
+              form,
+              { setCurrentProcessModalInfo }
+            )}
+        </Center>
+        <Group align="flex-end">
+          <Select
+            mt={20}
+            label="请选择操作类型"
+            data={Object.values(manualProcess).map((fm: any) => ({
+              value: fm.value,
+              label: fm.displayName,
+            }))}
+            {...form.getInputProps('currentSelectedProcessName')}
+          />
+          <Button
+            mt={10}
+            color="red"
+            size="xs"
+            disabled={form.values.currentSelectedProcessName.length === 0}
+            onClick={() => {
+              setCurrentProcessModalInfo(null);
+              form.setFieldValue(
+                'splitManualSteps',
+                form.values.splitManualSteps.filter(
+                  (_item: any, i: number) => currentProcessModalInfo?.formIndex !== i
+                )
+              );
+              ImageProcessOptionsModal.close();
+            }}
+          >
+            删除
+          </Button>
+          <Button
+            mt={10}
+            size="xs"
+            disabled={form.values.currentSelectedProcessName.length === 0}
+            onClick={() => {
+              setCurrentProcessModalInfo({
+                formIndex: currentProcessModalInfo.formIndex,
+                processName: form.values.currentSelectedProcessName,
+              });
+              form.setFieldValue(`splitManualSteps.${currentProcessModalInfo.formIndex}`, {
+                processType: form.values.currentSelectedProcessName,
+                key: randomId(),
+                exInfo: manualProcess[form.values.currentSelectedProcessName].initProps,
+              });
+            }}
+          >
+            更新
+          </Button>
+          <Button
+            mt={10}
+            size="xs"
+            disabled={form.values.currentSelectedProcessName.length === 0}
+            onClick={() => {
+              setCurrentProcessModalInfo({
+                formIndex: currentProcessModalInfo.formIndex + 1,
+                processName: form.values.currentSelectedProcessName,
+              });
+              form.insertListItem('splitManualSteps', {
+                processType: form.values.currentSelectedProcessName,
+                key: randomId(),
+                exInfo: manualProcess[form.values.currentSelectedProcessName].initProps,
+              });
+            }}
+          >
+            插入
+          </Button>
+        </Group>
+      </Modal>
+      <Modal
         size={700}
         opened={ImageViewModalOpened}
         onClose={() => {
@@ -561,23 +719,22 @@ export default function HomePage() {
         // title="图片预览"
       >
         <LoadingOverlay visible={isLoadingPreviewImage} />
-        <ScrollArea h={1000}>
-          <Center>
-            {previewImage && (
-              <MImage
-                width={600}
-                height="100%"
-                src={previewImage.imageUrl}
-                imageProps={{
-                  onLoad: () => {
-                    URL.revokeObjectURL(previewImage.imageUrl);
-                    setIsLoadingPreviewImage(false);
-                  },
-                }}
-              />
-            )}
-          </Center>
-        </ScrollArea>
+
+        <Center>
+          {previewImage && (
+            <MImage
+              width={600}
+              height="100%"
+              src={previewImage.imageUrl}
+              imageProps={{
+                onLoad: () => {
+                  URL.revokeObjectURL(previewImage.imageUrl);
+                  setIsLoadingPreviewImage(false);
+                },
+              }}
+            />
+          )}
+        </Center>
       </Modal>
       <Box pos="relative">
         <Center>
@@ -642,7 +799,7 @@ export default function HomePage() {
               />
             </Group>
             <NumberInput
-              min={0}
+              min={1}
               mt={20}
               label="第x卷 (无卷数漫画设为0)"
               {...form.getInputProps('volume')}
@@ -832,135 +989,59 @@ export default function HomePage() {
                           {...form.getInputProps('readFrom')}
                         />
                       )}
-                      {/* <Group mt={20}>
-                        <Switch
-                          label="裁剪padding"
-                          name="isProcessPadding"
-                          {...form.getInputProps('isProcessPadding', { type: 'checkbox' })}
-                        />
-                        {form.values.isProcessPadding && (
-                          <Switch
-                            label="自动检测padding颜色"
-                            name="autoDetectPaddingColor"
-                            {...form.getInputProps('autoDetectPaddingColor', { type: 'checkbox' })}
-                          />
-                        )}
-                        {form.values.isProcessPadding && (
-                          <Switch
-                            label="自动检测padding宽度"
-                            name="autoDetectPaddingWidth"
-                            {...form.getInputProps('autoDetectPaddingWidth', { type: 'checkbox' })}
-                          />
-                        )}
-                      </Group> */}
-
-                      {/* {!form.values.autoDetectPaddingColor && (
-                        <Box mt={10}>
+                      {form.values.extraProcess === 'splitManual' && (
+                        <Group align="flex-end">
                           <Select
+                            mt={20}
+                            label="请选择操作类型"
+                            data={Object.values(manualProcess).map((fm: any) => ({
+                              value: fm.value,
+                              label: fm.displayName,
+                            }))}
+                            {...form.getInputProps('currentSelectedProcessName')}
+                          />
+                          <Button
                             mt={10}
-                            name="paddingColor"
-                            label="两边padding颜色"
-                            placeholder="Pick one"
-                            searchable
-                            nothingFound="No options"
-                            data={[
-                              { label: '白色', value: 'white' },
-                              { label: '黑色', value: 'black' },
-                            ]}
-                            {...form.getInputProps('paddingColor')}
-                          />
-                          <Select
-                            mt={10}
-                            name="middlePaddingColor"
-                            label="中间padding颜色"
-                            placeholder="Pick one"
-                            searchable
-                            nothingFound="No options"
-                            data={[
-                              { label: '白色', value: 'white' },
-                              { label: '黑色', value: 'black' },
-                            ]}
-                            {...form.getInputProps('middlePaddingColor')}
-                          />
-                        </Box>
-                      )}
-                      {!form.values.autoDetectPaddingWidth && (
-                        <Group mt={20}>
-                          <NumberInput
-                            min={0}
-                            label="自定义左侧padding宽度"
-                            {...form.getInputProps('customLeftPadding')}
-                          />
-                          <NumberInput
-                            min={0}
-                            label="自定义右侧padding宽度"
-                            {...form.getInputProps('customRightPadding')}
-                          />
-                          <NumberInput
-                            min={0}
-                            label="自定义中间padding宽度"
-                            {...form.getInputProps('customMiddlePadding')}
-                          />
+                            disabled={form.values.currentSelectedProcessName.length === 0}
+                            onClick={() =>
+                              form.insertListItem('splitManualSteps', {
+                                processType: form.values.currentSelectedProcessName,
+                                key: randomId(),
+                                exInfo:
+                                  manualProcess[form.values.currentSelectedProcessName].initProps,
+                              })
+                            }
+                          >
+                            添加属性
+                          </Button>
                         </Group>
                       )}
-                      <Radio.Group
-                        mt={20}
-                        name="paddingCheckMethod"
-                        label="Padding的检测方式"
-                        {...form.getInputProps('paddingCheckMethod')}
-                      >
-                        <Group mt="xs">
-                          <Radio value="full" label="全量检测" />
-                          <Radio value="sample" label="样本检测" />
-                        </Group>
-                      </Radio.Group> */}
+                      <Group style={{ marginTop: 20 }}>
+                        {form.values.extraProcess === 'splitManual' &&
+                          form.values.splitManualSteps.map((item: any, index) => {
+                            const target: any = form.values.splitManualSteps[index];
+                            const processType: any = target?.processType;
 
-                      <Title mt={20} order={6}>
-                        白色检测阈值
-                      </Title>
+                            const targetProcess: any = manualProcess[processType];
 
-                      <Slider
-                        labelAlwaysOn
-                        mt={10}
-                        label={form.values.whiteThreshold}
-                        min={0}
-                        max={255}
-                        name="whiteThreshold"
-                        {...form.getInputProps('whiteThreshold')}
-                      />
-                      <Title mt={20} order={6}>
-                        黑色检测阈值
-                      </Title>
-                      <Slider
-                        labelAlwaysOn
-                        mt={10}
-                        label={form.values.blackThreshold}
-                        min={0}
-                        max={255}
-                        name="blackThreshold"
-                        {...form.getInputProps('blackThreshold')}
-                      />
-                      <Group mt={20}>
-                        <NumberInput
-                          min={0}
-                          label="左侧宽度修复"
-                          {...form.getInputProps('positionFix.left')}
-                        />
-                        <NumberInput
-                          min={0}
-                          label="右侧宽度修复"
-                          {...form.getInputProps('positionFix.right')}
-                        />
-                        <NumberInput
-                          min={0}
-                          label="上侧宽度修复"
-                          {...form.getInputProps('positionFix.top')}
-                        />
-                        <NumberInput
-                          min={0}
-                          label="下侧宽度修复"
-                          {...form.getInputProps('positionFix.bottom')}
-                        />
+                            return (
+                              <Group key={item.key} style={{ marginTop: 20 }}>
+                                {index >= 1 ? <IconArrowRightCircle /> : null}
+                                <Button
+                                  onClick={() => {
+                                    setCurrentProcessModalInfo({
+                                      processName: targetProcess.value,
+                                      formIndex: index,
+                                    });
+                                    ImageProcessOptionsModal.open();
+                                  }}
+                                  variant="outline"
+                                >
+                                  {targetProcess.displayName}
+                                </Button>
+                              </Group>
+                            );
+                          })}
                       </Group>
                     </Box>
                   )}
