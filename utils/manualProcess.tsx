@@ -49,8 +49,8 @@ export const manualProcess: any = {
           jimpImg.crop(
             exInfo.left,
             exInfo.top,
-            jimpImg.bitmap.width - exInfo.right,
-            jimpImg.bitmap.height - exInfo.bottom
+            jimpImg.bitmap.width - exInfo.right - exInfo.left,
+            jimpImg.bitmap.height - exInfo.bottom - exInfo.top
           )
         )
       ),
