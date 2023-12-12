@@ -1,4 +1,4 @@
-import { Group, NumberInput, Slider, Stack, Switch, Title } from '@mantine/core';
+import { Group, NumberInput, Select, Slider, Stack, Switch, Title } from '@mantine/core';
 import Jimp from 'jimp';
 
 export const manualProcess: any = {
@@ -110,6 +110,88 @@ export const manualProcess: any = {
         )
       );
     },
+  },
+  contain: {
+    displayName: '等比缩放(contain)',
+    value: 'contain',
+    initProps: {
+      w: 0,
+      h: 0,
+      hAlign: Jimp.HORIZONTAL_ALIGN_CENTER,
+      vAlign: Jimp.VERTICAL_ALIGN_MIDDLE,
+    },
+    optionRender: (currentProcessModalInfo: any, form: any) => {
+      const target = form.values.splitManualSteps[currentProcessModalInfo.formIndex];
+      const exInfoPath = `splitManualSteps.${currentProcessModalInfo.formIndex}.exInfo`;
+      if (!target.exInfo) {
+        form.setFieldValue(exInfoPath, {});
+      }
+      return (
+        <>
+          <Group mt={20}>
+            <NumberInput
+              min={0}
+              label="宽度（0为保持原有宽度）"
+              {...form.getInputProps(`${exInfoPath}.w`)}
+            />
+            <NumberInput
+              min={0}
+              label="高度（0为保持原有高度）"
+              {...form.getInputProps(`${exInfoPath}.h`)}
+            />
+            <Select
+              mt={20}
+              label="水平对齐方式"
+              data={[
+                {
+                  value: Jimp.HORIZONTAL_ALIGN_LEFT,
+                  label: '左对齐',
+                },
+                {
+                  value: Jimp.HORIZONTAL_ALIGN_CENTER,
+                  label: '水平居中',
+                },
+                {
+                  value: Jimp.HORIZONTAL_ALIGN_RIGHT,
+                  label: '右对齐',
+                },
+              ]}
+              {...form.getInputProps(`${exInfoPath}.hAlign`)}
+            />
+
+            <Select
+              mt={20}
+              label="垂直对齐方式"
+              data={[
+                {
+                  value: Jimp.VERTICAL_ALIGN_TOP,
+                  label: '顶部对齐',
+                },
+                {
+                  value: Jimp.VERTICAL_ALIGN_MIDDLE,
+                  label: '垂直居中',
+                },
+                {
+                  value: Jimp.VERTICAL_ALIGN_BOTTOM,
+                  label: '底部对齐',
+                },
+              ]}
+              {...form.getInputProps(`${exInfoPath}.vAlign`)}
+            />
+          </Group>
+        </>
+      );
+    },
+    process: async (jimpImgs: Jimp[], exInfo: any) =>
+      Promise.all(
+        jimpImgs.map(async (jimpImg: Jimp) => {
+          const { w, h, hAlign, vAlign } = exInfo;
+          const width = w === 0 ? jimpImg.bitmap.width : w;
+          const height = h === 0 ? jimpImg.bitmap.height : h;
+          // eslint-disable-next-line no-bitwise
+          return jimpImg.contain(width, height, hAlign | vAlign);
+        })
+      ),
   },
   middleSplit: {
     displayName: '从中拆分为两张',
