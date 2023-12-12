@@ -723,9 +723,12 @@ export default function HomePage() {
         <Center>
           {previewImage && (
             <MImage
-              width={600}
+              width={'100%'}
               height="100%"
               src={previewImage.imageUrl}
+              style={{
+                border: '2px solid red',
+              }}
               imageProps={{
                 onLoad: () => {
                   URL.revokeObjectURL(previewImage.imageUrl);
