@@ -757,6 +757,7 @@ export default function HomePage() {
                 { label: 'JPEG', value: 'image/jpeg' },
                 { label: 'PNG', value: 'image/png' },
                 { label: 'GIF', value: 'image/gif' },
+                { label: 'AVIF', value: 'image/avif' },
               ]}
               {...form.getInputProps('imgType')}
             />
