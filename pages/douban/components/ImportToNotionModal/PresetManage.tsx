@@ -7,7 +7,7 @@ import { notifications } from '@mantine/notifications';
 import { IconCheck } from '@tabler/icons';
 import { IconExclamationCircle } from '@tabler/icons-react';
 
-export function DoubanPresetManager(props: any) {
+export default function DoubanPresetManager(props: any) {
   const { bookListId, closeModalFunc = () => {} } = props;
   const [isLoading, setIsLoading] = useState(false);
   const token = useNotionStore((store: any) => store.token);

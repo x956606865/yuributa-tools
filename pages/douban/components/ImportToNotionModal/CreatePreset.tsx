@@ -128,7 +128,7 @@ export default function DoubanCreatePreset({ onSave = () => {} }: CreatePresetPr
       getNotionDBList();
     }
   }, [token]);
-  const rows = fetcherMapping.map((element: any, index) => (
+  const rows = fetcherMapping.map((element: any) => (
     <tr key={element.fieldName}>
       <td>{element.disPlayName}</td>
       <td>

@@ -14,7 +14,7 @@ import { getDatasets } from '~/utils/client/douban_book';
 import { notifications } from '@mantine/notifications';
 import { IconExclamationCircle } from '@tabler/icons-react';
 
-export function ViewBookListDataModal(props: any) {
+export default function ViewBookListDataModal(props: any) {
   const {
     disabled = false,
     size = 'xs',

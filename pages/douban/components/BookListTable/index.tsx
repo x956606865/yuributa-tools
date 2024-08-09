@@ -12,8 +12,8 @@ import { IconExclamationCircle } from '@tabler/icons-react';
 import { IconCheck } from '@tabler/icons';
 import { bookListStatus, bookListStatusText } from '~/constant';
 import moment from 'moment';
-import { ViewBookListDataModal } from '../ViewBookListDataModal';
-import { ImportToNotionModal } from '../ImportToNotionModal';
+import ViewBookListDataModal from '../ViewBookListDataModal';
+import ImportToNotionModal from '../ImportToNotionModal';
 
 export default function BookListTable({ onFinished = () => {} }: any) {
   const [tableData, setTableData] = useState<any[]>([]);

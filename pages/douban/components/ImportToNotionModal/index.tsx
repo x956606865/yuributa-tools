@@ -14,10 +14,10 @@ import { useEffect, useState } from 'react';
 import { getDatasets } from '~/utils/client/douban_book';
 import { notifications } from '@mantine/notifications';
 import { IconExclamationCircle } from '@tabler/icons-react';
-import { DoubanPresetManager } from './PresetManage';
+import DoubanPresetManager from './PresetManage';
 import DoubanCreatePreset from './CreatePreset';
 
-export function ImportToNotionModal(props: any) {
+export default function ImportToNotionModal(props: any) {
   const {
     disabled = false,
     size = 'xs',
