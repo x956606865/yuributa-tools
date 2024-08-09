@@ -1,3 +1,4 @@
+import { libName } from '~/constant';
 import { CheerioCrawler, log, Configuration, useState, KeyValueStore, Dataset } from 'crawlee';
 import { router } from '../../../utils/server/routes';
 import { getNotionClient, getListPagesFromDB } from '../../../utils/server/utils';
@@ -6,7 +7,7 @@ export default async function handler(req: any, res: any) {
   const { token, databaseId, isKeepCache = false } = req.body;
   const datasetsId = `update-douban-score_${databaseId}`;
   // 检查是否有运行中的任务
-  const kv = await KeyValueStore.open(`update-douban-score-running-status`);
+  const kv = await KeyValueStore.open(libName.taskList);
   const isRecordExist = await kv.recordExists(databaseId);
   const task: any = isRecordExist ? await kv.getValue(databaseId) : null;
   const dataset: Dataset = await Dataset.open(datasetsId);

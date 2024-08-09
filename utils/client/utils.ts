@@ -3,9 +3,11 @@
 import { toNumber } from 'lodash';
 import moment from 'moment';
 import BGMMappingV1 from '~/pages/notion/components/PresetManage/fieldMapping/bgm.json';
+import DoubanMappingV1 from '~/pages/douban/components/ImportToNotionModal/fieldMapping/douban.json';
 
 export const fetcherMapping: Record<string, any> = {
   bgmV1: BGMMappingV1,
+  douban: DoubanMappingV1,
 };
 export async function checkToken(token: string | undefined) {
   const result = await fetch('/api/notion/databases', {

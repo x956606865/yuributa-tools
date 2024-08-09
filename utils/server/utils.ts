@@ -40,3 +40,9 @@ export async function getListPagesFromDB(options: any): Promise<any> {
     }
   }
 }
+export function isStringAndNotEmpty(str: any) {
+  return typeof str === 'string' && str.trim().length > 0;
+}
+export function base64EncodeName(name: string) {
+  return Buffer.from(name).toString('base64');
+}

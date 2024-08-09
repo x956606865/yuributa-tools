@@ -1,8 +1,9 @@
+import { libName } from '~/constant';
 import { KeyValueStore } from 'crawlee';
 
 export default async function handler(req: any, res: any) {
   if (req.method === 'GET') {
-    const kv = await KeyValueStore.open(`update-douban-score-running-status`);
+    const kv = await KeyValueStore.open(libName.taskList);
     const result: any = {};
     await kv.forEachKey(async (key, index, info) => {
       console.log(`Key at ${index}: ${key} has size ${info.size}`);

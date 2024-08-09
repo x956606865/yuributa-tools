@@ -1,0 +1,159 @@
+[
+  {
+    "fieldName": "url",
+    "type": "string",
+    "disPlayName": "豆瓣链接",
+    "group": "基础数据",
+    "support": ["rich_text"]
+  },
+  {
+    "fieldName": "title",
+    "type": "string",
+    "disPlayName": "标题",
+    "group": "基础数据",
+    "support": ["rich_text", "title"]
+  },
+  {
+    "fieldName": "originTitle",
+    "type": "string",
+    "disPlayName": "原名",
+    "group": "基础数据",
+    "support": ["rich_text", "title"]
+  },
+  {
+    "fieldName": "又名",
+    "type": "string",
+    "disPlayName": "又名",
+    "keyProp": "name",
+    "group": "基础数据",
+    "support": ["rich_text", "multi_select"]
+  },
+  {
+    "fieldName": "coverUrl",
+    "type": "string",
+    "disPlayName": "封面",
+    "keyProp": "cover",
+    "group": "基础数据",
+    "support": ["files", "cover"]
+  },
+  {
+    "fieldName": "desc",
+    "type": "string",
+    "disPlayName": "简介",
+    "keyProp": "desc",
+    "group": "基础数据",
+    "support": ["rich_text"]
+  },
+  {
+    "fieldName": "rating_num",
+    "type": "number",
+    "disPlayName": "评分",
+    "group": "基础数据",
+    "support": ["rich_text", "number"]
+  },
+  {
+    "fieldName": "rating_num_graphic",
+    "type": "string",
+    "disPlayName": "评分图",
+    "group": "基础数据",
+    "support": ["rich_text", "select"]
+  },
+  {
+    "fieldName": "commentText",
+    "type": "string",
+    "disPlayName": "评价",
+    "group": "基础数据",
+    "support": ["rich_text", "block"]
+  },
+  {
+    "fieldName": "year",
+    "type": "string",
+    "disPlayName": "发行年份",
+    "group": "基础数据",
+    "support": ["rich_text"]
+  },
+  {
+    "fieldName": "导演",
+    "type": "linkTextArray",
+    "disPlayName": "导演",
+    "group": "基础数据",
+    "support": ["rich_text", "multi_select"]
+  },
+  {
+    "fieldName": "编剧",
+    "type": "linkTextArray",
+    "disPlayName": "编剧",
+    "group": "基础数据",
+    "support": ["rich_text", "multi_select"]
+  },
+  {
+    "fieldName": "主演",
+    "type": "linkTextArray",
+    "disPlayName": "主演",
+    "group": "基础数据",
+    "support": ["rich_text", "multi_select"]
+  },
+  {
+    "fieldName": "类型",
+    "type": "linkTextArray",
+    "disPlayName": "类型",
+    "group": "基础数据",
+    "support": ["rich_text", "multi_select"]
+  },
+  {
+    "fieldName": "制片国家/地区",
+    "type": "stringArray",
+    "disPlayName": "制片国家/地区",
+    "group": "基础数据",
+    "support": ["rich_text", "multi_select"]
+  },
+  {
+    "fieldName": "语言",
+    "type": "stringArray",
+    "disPlayName": "语言",
+    "group": "基础数据",
+    "support": ["rich_text", "multi_select"]
+  },
+  {
+    "fieldName": "上映日期",
+    "type": "doubanExtraDateArray",
+    "disPlayName": "上映日期",
+    "group": "基础数据",
+    "support": ["rich_text"]
+  },
+  {
+    "fieldName": "首播",
+    "type": "doubanExtraDateArray",
+    "disPlayName": "首播",
+    "group": "基础数据",
+    "support": ["rich_text"]
+  },
+  {
+    "fieldName": "最早开播时间",
+    "type": "doubanExtraDate",
+    "disPlayName": "最早开播时间",
+    "group": "基础数据",
+    "support": ["rich_text", "date"]
+  },
+  {
+    "fieldName": "集数/时长",
+    "type": "linkTextArray",
+    "disPlayName": "集数/时长",
+    "group": "基础数据",
+    "support": ["rich_text", "multi_select"]
+  },
+  {
+    "fieldName": "官方网站",
+    "type": "linkTextArray",
+    "disPlayName": "官方网站",
+    "group": "基础数据",
+    "support": ["rich_text"]
+  },
+  {
+    "fieldName": "IMDb",
+    "type": "stringArray",
+    "disPlayName": "IMDb",
+    "group": "基础数据",
+    "support": ["rich_text", "multi_select"]
+  }
+]

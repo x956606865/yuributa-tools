@@ -3,7 +3,7 @@ import { KeyValueStore } from 'crawlee';
 export default async function handler(req: any, res: any) {
   if (req.method === 'DELETE') {
     const { taskid } = req.query;
-    const kv = await KeyValueStore.open(`update-douban-score-running-status`);
+    const kv = await KeyValueStore.open(`douban-book-list`);
     const isRecordExist = await kv.recordExists(taskid);
     if (!isRecordExist) {
       return res.status(404).json({

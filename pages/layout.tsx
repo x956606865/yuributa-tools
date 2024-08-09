@@ -55,6 +55,18 @@ const data = [
     label: 'notion漫画',
     href: '/notion',
   },
+  {
+    icon: <IconAspectRatio size="1rem" />,
+    color: 'blue',
+    label: '豆瓣书单',
+    href: '/douban',
+  },
+  // {
+  //   icon: <IconAspectRatio size="1rem" />,
+  //   color: 'blue',
+  //   label: 'notion自动化',
+  //   href: '/notionAuto',
+  // },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {
