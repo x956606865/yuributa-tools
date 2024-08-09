@@ -176,39 +176,44 @@ export default function NotionHomePage() {
               }}
             />
           )}
-          <Group>
-            {UIDisplay.isShowResetTokenBtn && (
-              <Button
-                onClick={() => {
-                  setToken(undefined);
-                  setStepName('checkToken');
-                  setLocalToken(undefined);
-                }}
-                mt={10}
-              >
-                重置认证
+          {stepName !== 'checkToken' && (
+            <Group>
+              {UIDisplay.isShowResetTokenBtn && (
+                <Button
+                  onClick={() => {
+                    setToken(undefined);
+                    setStepName('checkToken');
+                    setLocalToken(undefined);
+                  }}
+                  mt={10}
+                >
+                  重置认证
+                </Button>
+              )}
+            </Group>
+          )}
+          {stepName !== 'checkToken' && (
+            <Group mt={20}>
+              <Title order={4}>服务器状态:</Title>
+              {isFetchingServerStatus ? (
+                <Loader size="xs" variant="bars" />
+              ) : (
+                <Badge color={serverStatus === '忙碌' || serverStatus === '出错' ? 'red' : 'green'}>
+                  {serverStatus}
+                </Badge>
+              )}
+              <Button size="xs" disabled={isFetchingServerStatus} onClick={getServerStatus}>
+                刷新
               </Button>
-            )}
-          </Group>
-          <Group mt={20}>
-            <Title order={4}>服务器状态:</Title>
-            {isFetchingServerStatus ? (
-              <Loader size="xs" variant="bars" />
-            ) : (
-              <Badge color={serverStatus === '忙碌' || serverStatus === '出错' ? 'red' : 'green'}>
-                {serverStatus}
-              </Badge>
-            )}
-            <Button size="xs" disabled={isFetchingServerStatus} onClick={getServerStatus}>
-              刷新
-            </Button>
-            <Button size="xs" disabled={serverStatus !== '忙碌'} onClick={getServerStatus}>
-              查看当前正在执行的任务
-            </Button>
-          </Group>
+              <Button size="xs" disabled={serverStatus !== '忙碌'} onClick={getServerStatus}>
+                查看当前正在执行的任务
+              </Button>
+            </Group>
+          )}
+
           {stepName === 'selectDBAndOperator' && <SelectDBAndOperator token={token} form={form} />}
 
-          {form.values.operatorName === 'fetchNew' && (
+          {stepName === 'selectDBAndOperator' && form.values.operatorName === 'fetchNew' && (
             <Box maw={500} mx="auto" mt={20}>
               <form
                 onSubmit={form.onSubmit(async (values: any) => {
@@ -272,7 +277,9 @@ export default function NotionHomePage() {
               </form>
             </Box>
           )}
-          {form.values.operatorName === 'manageBookList' && <BookListTable />}
+          {stepName === 'selectDBAndOperator' && form.values.operatorName === 'manageBookList' && (
+            <BookListTable />
+          )}
           {/* {stepName === 'selectDBAndOperator' && (
             <PresetManage
               form={form}
